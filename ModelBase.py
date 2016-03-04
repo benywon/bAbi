@@ -31,10 +31,12 @@ class ModelBase():
         self.parameter = {}
         self.model_file_base_path = ''
         self.train_function = self.test_function = None
+        self.Model_name = ''
         if data is not None:
-            self.wordEmbedding=data.wordEmbedding
-            self.EmbeddingSize=data.EmbeddingSize
-            self.vocabularySize=data.vocabularySize
+            self.wordEmbedding = data.wordEmbedding
+            self.EmbeddingSize = data.EmbeddingSize
+            self.vocabularySize = data.vocabularySize
+            self.max_batch_size = data.max_batch_size
 
     @classmethod
     def print_model_info(cls, function):

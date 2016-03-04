@@ -13,10 +13,11 @@ sigmoids = lambda x: 1 / (1 + T.exp(-x))
 
 
 class IAGRU(ModelBase):
-    def __init__(self, RNN_MODE='GRU',max_ave_pooling='ave', use_the_last_hidden_variable=False, Margin=0.1,
+    def __init__(self, RNN_MODE='GRU', max_ave_pooling='ave', use_the_last_hidden_variable=False, Margin=0.1,
                  **kwargs):
         ModelBase.__init__(self, **kwargs)
         self.RNN_MODE = RNN_MODE
+        self.Model_name = 'IAGRU'
         self.Margin = Margin
         self.use_the_last_hidden_variable = use_the_last_hidden_variable
         self.max_ave_pooling = max_ave_pooling
@@ -24,7 +25,6 @@ class IAGRU(ModelBase):
         assert len(self.wordEmbedding) > 0, 'you have not initiate data!!!'
         self.build_model()
         self.print_model_info(model_name='IAGRU')
-
 
     @ModelBase.print_model_info
     def print_model_info(self, model_name='IAGRU'):
@@ -210,7 +210,6 @@ class IAGRU(ModelBase):
                                allow_input_downcast=True)
         print 'build model done!'
         return train, test
-
 
 
 if __name__ == '__main__':

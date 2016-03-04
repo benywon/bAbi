@@ -35,7 +35,7 @@ class AnswerSelection:
             self.Model = OAGRU(data=self.Data, **kwargs)
 
     def Train(self):
-        print 'start training ' + self.Data.dataset_name + ' IAGRU...'
+        print 'start training ' + self.Data.dataset_name + '  '+self.Model.Model_name+'...'
         for epoch in xrange(self.Model.epochs):
             print 'start epoch:' + str(epoch)
             for i in xrange(self.Data.train_number):
@@ -87,7 +87,8 @@ class AnswerSelection:
 
 
 if __name__ == '__main__':
-    c = AnswerSelection(optmizer='adadelta', MODEL=OAGru, batch_training=True, sampling=5, reload=False, Margin=0.15,
+    c = AnswerSelection(optmizer='adadelta', MODEL=OAGru, DATASET=QASent, batch_training=True, sampling=5, reload=False,
+                        Margin=0.15,
                         use_the_last_hidden_variable=False, use_clean=True, epochs=50, Max_length=50,
                         N_hidden=150)
     c.Train()

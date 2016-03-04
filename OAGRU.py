@@ -13,6 +13,7 @@ class OAGRU(ModelBase):
                  **kwargs):
         ModelBase.__init__(self, **kwargs)
         self.attention = attention
+        self.Model_name = 'OAGRU'
         self.Margin = Margin
         self.RNN_MODE = RNN_MODE
         self.use_the_last_hidden_variable = use_the_last_hidden_variable
@@ -133,14 +134,14 @@ class OAGRU(ModelBase):
         in_answer_wrong_embeddings = EmbeddingMatrix[In_answer_wrong]
         # this is the shared function
         if self.RNN_MODE == 'GRU':
-            forward = GRU(N_hidden=self.N_hidden, N_in=self.EmbeddingSize)
-            backward = GRU(N_hidden=self.N_hidden, N_in=self.EmbeddingSize, backwards=True)
+            forward = GRU(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize)
+            backward = GRU(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize, backwards=True)
         elif self.RNN_MODE == 'LSTM':
-            forward = GRU(N_hidden=self.N_hidden, N_in=self.EmbeddingSize)
-            backward = GRU(N_hidden=self.N_hidden, N_in=self.EmbeddingSize, backwards=True)
+            forward = GRU(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize)
+            backward = GRU(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize, backwards=True)
         else:
-            forward = RNN(N_hidden=self.N_hidden, N_in=self.EmbeddingSize)
-            backward = RNN(N_hidden=self.N_hidden, N_in=self.EmbeddingSize, backwards=True)
+            forward = RNN(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize)
+            backward = RNN(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize, backwards=True)
 
         Wam = theano.shared(sample_weights(2 * self.N_hidden, 2 * self.N_hidden), name='Wam')
         Wms = theano.shared(rng.uniform(-0.3, 0.3, size=(2 * self.N_hidden)), name='Wms')
@@ -191,7 +192,7 @@ class OAGRU(ModelBase):
 
         all_params = forward.get_parameter()
         all_params.extend(backward.get_parameter())
-
+        self.parameter = all_params
         updates = self.get_update(loss=loss)
         loss = self.add_l1_l2_norm(loss=loss)
 
