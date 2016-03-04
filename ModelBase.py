@@ -16,8 +16,9 @@ class ModelBase:
     """
 
     def __init__(self, N_hidden=100, optmizer='sgd',
-                 sampling=0,
+                 sampling=0,Train_embedding=False,
                  learning_rate=0.01, l1=0.00001, l2=0.00001, epochs=50, **kwargs):
+        self.Train_embedding = Train_embedding
         self.sampling = sampling
         self.epochs = epochs
         self.l1 = l1

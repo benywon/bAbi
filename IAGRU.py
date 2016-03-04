@@ -107,6 +107,9 @@ class IAGRU(ModelBase):
         all_params = forward.get_parameter()
         all_params.extend(backward.get_parameter())
         all_params.append(attention_projection)
+
+        if self.Train_embedding:
+            all_params.append(EmbeddingMatrix)
         self.parameter = all_params
 
         updates = self.get_update(loss=loss)

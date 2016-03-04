@@ -10,10 +10,11 @@ from public_functions import *
 __author__ = 'benywon'
 
 
-class IAGRU(ModelBase):
-    def __init__(self, max_ave_pooling='ave', use_the_last_hidden_variable=False, Margin=0.1,
+class OAGRU(ModelBase):
+    def __init__(self, attention=True, max_ave_pooling='ave', use_the_last_hidden_variable=False, Margin=0.1,
                  **kwargs):
         ModelBase.__init__(self, **kwargs)
+        self.attention = attention
         self.Margin = Margin
         self.use_the_last_hidden_variable = use_the_last_hidden_variable
         self.max_ave_pooling = max_ave_pooling
@@ -59,65 +60,69 @@ class IAGRU(ModelBase):
             forward = RNN(N_hidden=self.N_hidden, N_in=self.EmbeddingSize)
             backward = RNN(N_hidden=self.N_hidden, N_in=self.EmbeddingSize, backwards=True)
 
-        def get_gru_representation(In_embedding):
+        def get_lstm_representation(In_embedding):
             forward.build(In_embedding)
             backward.build(In_embedding)
             lstm_forward = forward.get_hidden()
-            lstm_backward = backward.get_hidden()
-            if self.use_the_last_hidden_variable:
-                return T.concatenate([lstm_forward, lstm_backward[::-1]], axis=1)
+            lstm_bacward = backward.get_hidden()
+            return T.concatenate([lstm_forward, lstm_bacward], axis=1)
+
+        question_lstm_matrix = get_lstm_representation(in_question_embedding)
+        answer_yes_lstm_matrix = get_lstm_representation(in_answer_right_embedding)
+        answer_no_lstm_matrix = get_lstm_representation(in_answer_wrong_embedding)
+        if self.max_ave_pooling == 'ave':
+            Oq = T.mean(question_lstm_matrix, axis=0)
+        else:
+            Oq = T.max(question_lstm_matrix, axis=0)
+        Wam = theano.shared(sample_weights(2 * self.N_hidden, 2 * self.N_hidden), name='Wam')
+        Wms = theano.shared(sample_weights(2 * self.N_hidden), name='Wms')
+        Wqm = theano.shared(sample_weights(2 * self.N_hidden, 2 * self.N_hidden), name='Wqm')
+
+        def get_final_result(answer_lstm_matrix):
+            if not self.attention:
+                Oa = T.mean(answer_lstm_matrix, axis=0)
             else:
-                return T.concatenate([lstm_forward, lstm_backward], axis=1)
+                WqmOq = T.dot(Wqm, Oq)
 
-        def trans_representationfromquestion(In_embedding, question):
-            sigmoid = sigmoids(T.dot(T.dot(In_embedding, attention_projection), question))
-            transMatrix = In_embedding.T * sigmoid
-            return get_gru_representation(transMatrix.T)
+                # Saq_before_softmax, _ = theano.scan(lambda v: T.tanh(T.dot(v, Wam) + WqmOq), sequences=answer_lstm)
+                Saq_before_softmax = T.nnet.sigmoid(T.dot(answer_lstm_matrix, Wam) + WqmOq)
+                # then we softmax this layer
 
-        def get_output(In_matrix):
-            if self.use_the_last_hidden_variable:
-                Oq = In_matrix[-1]
-            else:
-                if self.max_ave_pooling == 'ave':
-                    Oq = T.mean(In_matrix, axis=0)
-                else:
-                    Oq = T.max(In_matrix, axis=0)
-            return Oq
+                Saq = T.nnet.softmax(T.dot(Saq_before_softmax, Wms))
 
-        attention_projection = theano.shared(sample_weights(self.EmbeddingSize, 2 * self.N_hidden),
-                                             name='attention_projection')
-        question_lstm_matrix = get_gru_representation(in_question_embedding)
+                HatHat = T.dot(T.diag(T.flatten(Saq)), answer_lstm_matrix)
 
-        question_representation = get_output(question_lstm_matrix)
+                Oa = T.sum(HatHat, axis=0)
+            return Oa
 
-        answer_yes_lstm_matrix = trans_representationfromquestion(in_answer_right_embedding, question_representation)
-        answer_no_lstm_matrix = trans_representationfromquestion(in_answer_wrong_embedding, question_representation)
-
-        oa_yes = get_output(answer_yes_lstm_matrix)
-        oa_no = get_output(answer_no_lstm_matrix)
-
-        predict_yes = cosine(oa_yes, question_representation)
-        predict_no = cosine(oa_no, question_representation)
-
-        margin = predict_yes - predict_no
-        loss = T.maximum(0, self.Margin - margin)
+        oa_yes = get_final_result(answer_yes_lstm_matrix)
+        oa_no = get_final_result(answer_no_lstm_matrix)
 
         all_params = forward.get_parameter()
         all_params.extend(backward.get_parameter())
-        all_params.append(attention_projection)
+
+        predict_yes = cosine(oa_yes, Oq)
+        predict_no = cosine(oa_no, Oq)
+
+        margin = predict_yes - predict_no
+        loss = T.maximum(0, self.Margin - margin)
+        our_parameter = [Wam, Wms, Wqm]
+        if self.attention:
+            all_params.extend(our_parameter)
+
+        if self.Train_embedding:
+            all_params.append(EmbeddingMatrix)
         self.parameter = all_params
+        print 'calc parameters'
 
         updates = self.get_update(loss=loss)
         loss = self.add_l1_l2_norm(loss=loss)
-
-        print 'start compile function...'
+        print 'compiling functions'
 
         train = theano.function([In_quesiotion, In_answer_right, In_answer_wrong],
                                 outputs=loss,
                                 updates=updates,
                                 allow_input_downcast=True)
-        test = theano.function([In_quesiotion, In_answer_right],
-                               outputs=predict_yes,
-                               on_unused_input='ignore')
+        test = theano.function([In_quesiotion, In_answer_right], outputs=predict_yes, on_unused_input='ignore')
         print 'build model done!'
         return train, test
