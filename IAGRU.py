@@ -141,11 +141,11 @@ class IAGRU(ModelBase):
             forward = GRU(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize)
             backward = GRU(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize, backwards=True)
         elif self.RNN_MODE == 'LSTM':
-            forward = GRU(N_hidden=self.N_hidden,  batch_mode=True, N_in=self.EmbeddingSize)
-            backward = GRU(N_hidden=self.N_hidden,  batch_mode=True, N_in=self.EmbeddingSize, backwards=True)
+            forward = GRU(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize)
+            backward = GRU(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize, backwards=True)
         else:
-            forward = RNN(N_hidden=self.N_hidden,  batch_mode=True, N_in=self.EmbeddingSize)
-            backward = RNN(N_hidden=self.N_hidden, batch_mode=True,  N_in=self.EmbeddingSize, backwards=True)
+            forward = RNN(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize)
+            backward = RNN(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize, backwards=True)
 
         def get_gru_representation(In_embedding):
             forward.build(In_embedding)
@@ -193,6 +193,7 @@ class IAGRU(ModelBase):
         all_params.extend(backward.get_parameter())
         all_params.append(attention_projection)
         self.parameter = all_params
+
         updates = self.get_update(loss=loss)
         loss = self.add_l1_l2_norm(loss=loss)
 

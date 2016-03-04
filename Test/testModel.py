@@ -70,50 +70,39 @@ def build_model_batch():
         if not attention:
             Oa = T.mean(answer_lstm_matrix, axis=0)
         else:
-            WqmOq = T.dot(Wqm, question_representation)
-
-            # Saq_before_softmax, _ = theano.scan(lambda v: T.tanh(T.dot(v, Wam) + WqmOq), sequences=answer_lstm)
+            WqmOq = T.dot(question_representation, Wqm)
             Saq_before_softmax = T.nnet.sigmoid(T.dot(answer_lstm_matrix, Wam) + WqmOq)
-            # then we softmax this layer
-
-            Saq = T.nnet.softmax(T.dot(Saq_before_softmax, Wms))
-
-            HatHat = T.dot(T.diag(T.flatten(Saq)), answer_lstm_matrix)
-
-            Oa = T.sum(HatHat, axis=0)
+            Saq = T.nnet.softmax(T.dot(Saq_before_softmax, Wms).T)
+            Oa = T.batched_dot(Saq , answer_lstm_matrix.dimshuffle(1, 0, 2))
         return Oa
 
-    question_representation = get_output(question_lstm_matrix)
-    # answer_yes_lstm_matrix = get_final_result(in_answer_right_embeddings, question_representation)
-    # answer_no_lstm_matrix = get_final_result(in_answer_wrong_embeddings, question_representation)
-    #
-    # oa_yes = get_output(answer_yes_lstm_matrix)
-    # oa_no = get_output(answer_no_lstm_matrix)
-    #
-    # predict_yes, _ = theano.scan(cosine, sequences=[oa_yes, question_representation])
-    # predict_no, _ = theano.scan(cosine, sequences=[oa_no, question_representation])
-    #
-    # margin = predict_yes - predict_no
-    # loss = T.mean(T.maximum(0, Margin - margin))
+    question_representations = get_output(question_lstm_matrix)
+    oa_yes = get_final_result(answer_yes_lstm_matrix, question_representations)
+    oa_no = get_final_result(answer_no_lstm_matrix, question_representations)
+    predict_yes, _ = theano.scan(cosine, sequences=[oa_yes, question_representations])
+    predict_no, _ = theano.scan(cosine, sequences=[oa_no, question_representations])
+
+    margin = predict_yes - predict_no
+    loss = T.mean(T.maximum(0, Margin - margin))
 
     all_params = forward.get_parameter()
     all_params.extend(backward.get_parameter())
 
-    parameter = all_params
+    # self.parameter = all_params
     # updates = get_update(loss=loss)
     # loss = add_l1_l2_norm(loss=loss)
 
     print 'start compile function...'
     train = theano.function([In_quesiotion, In_answer_right, In_answer_wrong],
-                            outputs=question_representation,
+                            outputs=[predict_yes,predict_no],
                             # updates=updates,
                             on_unused_input='ignore',
                             allow_input_downcast=True)
 
-    # test = theano.function([In_quesiotion, In_answer_right],
-    #                        outputs=predict_yes[0],
-    #                        on_unused_input='ignore',
-    #                        allow_input_downcast=True)
+    test = theano.function([In_quesiotion, In_answer_right],
+                           outputs=predict_yes[0],
+                           on_unused_input='ignore',
+                           allow_input_downcast=True)
     print 'build model done!'
     return train
 

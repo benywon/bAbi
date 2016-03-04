@@ -132,17 +132,17 @@ class OAGRU(ModelBase):
         in_answer_wrong_embeddings = EmbeddingMatrix[In_answer_wrong]
         # this is the shared function
         if self.RNN_MODE == 'GRU':
-            forward = GRU(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize)
-            backward = GRU(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize, backwards=True)
+            forward = GRU(N_hidden=self.N_hidden, N_in=self.EmbeddingSize)
+            backward = GRU(N_hidden=self.N_hidden, N_in=self.EmbeddingSize, backwards=True)
         elif self.RNN_MODE == 'LSTM':
-            forward = GRU(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize)
-            backward = GRU(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize, backwards=True)
+            forward = GRU(N_hidden=self.N_hidden, N_in=self.EmbeddingSize)
+            backward = GRU(N_hidden=self.N_hidden, N_in=self.EmbeddingSize, backwards=True)
         else:
-            forward = RNN(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize)
-            backward = RNN(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize, backwards=True)
+            forward = RNN(N_hidden=self.N_hidden, N_in=self.EmbeddingSize)
+            backward = RNN(N_hidden=self.N_hidden, N_in=self.EmbeddingSize, backwards=True)
 
         Wam = theano.shared(sample_weights(2 * self.N_hidden, 2 * self.N_hidden), name='Wam')
-        Wms = theano.shared(sample_weights(2 * self.N_hidden), name='Wms')
+        Wms = theano.shared(rng.uniform(-0.3, 0.3, size=(2 * self.N_hidden)), name='Wms')
         Wqm = theano.shared(sample_weights(2 * self.N_hidden, 2 * self.N_hidden), name='Wqm')
 
         def get_gru_representation(In_embedding):
@@ -156,8 +156,8 @@ class OAGRU(ModelBase):
                 return T.concatenate([lstm_forward, lstm_backward], axis=2)
 
         question_lstm_matrix = get_gru_representation(in_question_embeddings)
-        answer_yes_lstm_matrix=get_gru_representation(in_answer_right_embeddings)
-        answer_no_lstm_matrix=get_gru_representation(in_answer_wrong_embeddings)
+        answer_yes_lstm_matrix = get_gru_representation(in_answer_right_embeddings)
+        answer_no_lstm_matrix = get_gru_representation(in_answer_wrong_embeddings)
 
         def get_output(In_matrix):
             if self.use_the_last_hidden_variable:
@@ -169,34 +169,21 @@ class OAGRU(ModelBase):
                     Oq = T.max(In_matrix, axis=0)
             return Oq
 
-
-        def get_final_result(answer_lstm_matrix,question_representation):
+        def get_final_result(answer_lstm_matrix, question_representation):
             if not self.attention:
                 Oa = T.mean(answer_lstm_matrix, axis=0)
             else:
-                WqmOq = T.dot(Wqm, question_representation)
-
-                # Saq_before_softmax, _ = theano.scan(lambda v: T.tanh(T.dot(v, Wam) + WqmOq), sequences=answer_lstm)
+                WqmOq = T.dot(question_representation, Wqm)
                 Saq_before_softmax = T.nnet.sigmoid(T.dot(answer_lstm_matrix, Wam) + WqmOq)
-                # then we softmax this layer
-
-                Saq = T.nnet.softmax(T.dot(Saq_before_softmax, Wms))
-
-                HatHat = T.dot(T.diag(T.flatten(Saq)), answer_lstm_matrix)
-
-                Oa = T.sum(HatHat, axis=0)
+                Saq = T.nnet.softmax(T.dot(Saq_before_softmax, Wms).T)
+                Oa = T.batched_dot(Saq, answer_lstm_matrix.dimshuffle(1, 0, 2))
             return Oa
 
-
-        question_representation = get_output(question_lstm_matrix)
-        answer_yes_lstm_matrix = trans_representationfromquestion(in_answer_right_embeddings, question_representation)
-        answer_no_lstm_matrix = trans_representationfromquestion(in_answer_wrong_embeddings, question_representation)
-
-        oa_yes = get_output(answer_yes_lstm_matrix)
-        oa_no = get_output(answer_no_lstm_matrix)
-
-        predict_yes, _ = theano.scan(cosine, sequences=[oa_yes, question_representation])
-        predict_no, _ = theano.scan(cosine, sequences=[oa_no, question_representation])
+        question_representations = get_output(question_lstm_matrix)
+        oa_yes = get_final_result(answer_yes_lstm_matrix, question_representations)
+        oa_no = get_final_result(answer_no_lstm_matrix, question_representations)
+        predict_yes, _ = theano.scan(cosine, sequences=[oa_yes, question_representations])
+        predict_no, _ = theano.scan(cosine, sequences=[oa_no, question_representations])
 
         margin = predict_yes - predict_no
         loss = T.mean(T.maximum(0, self.Margin - margin))
@@ -204,7 +191,6 @@ class OAGRU(ModelBase):
         all_params = forward.get_parameter()
         all_params.extend(backward.get_parameter())
 
-        self.parameter = all_params
         updates = self.get_update(loss=loss)
         loss = self.add_l1_l2_norm(loss=loss)
 
