@@ -56,8 +56,8 @@ class IAGRU(ModelBase):
             forward = GRU(N_hidden=self.N_hidden, N_in=self.EmbeddingSize)
             backward = GRU(N_hidden=self.N_hidden, N_in=self.EmbeddingSize, backwards=True)
         elif self.RNN_MODE == 'LSTM':
-            forward = GRU(N_hidden=self.N_hidden, N_in=self.EmbeddingSize)
-            backward = GRU(N_hidden=self.N_hidden, N_in=self.EmbeddingSize, backwards=True)
+            forward = LSTM(N_hidden=self.N_hidden, N_in=self.EmbeddingSize)
+            backward = LSTM(N_hidden=self.N_hidden, N_in=self.EmbeddingSize, backwards=True)
         else:
             forward = RNN(N_hidden=self.N_hidden, N_in=self.EmbeddingSize)
             backward = RNN(N_hidden=self.N_hidden, N_in=self.EmbeddingSize, backwards=True)
@@ -142,8 +142,8 @@ class IAGRU(ModelBase):
             forward = GRU(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize)
             backward = GRU(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize, backwards=True)
         elif self.RNN_MODE == 'LSTM':
-            forward = GRU(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize)
-            backward = GRU(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize, backwards=True)
+            forward = LSTM(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize)
+            backward = LSTM(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize, backwards=True)
         else:
             forward = RNN(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize)
             backward = RNN(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize, backwards=True)

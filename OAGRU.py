@@ -53,8 +53,8 @@ class OAGRU(ModelBase):
             forward = GRU(N_hidden=self.N_hidden, N_in=self.EmbeddingSize)
             backward = GRU(N_hidden=self.N_hidden, N_in=self.EmbeddingSize, backwards=True)
         elif self.RNN_MODE == 'LSTM':
-            forward = GRU(N_hidden=self.N_hidden, N_in=self.EmbeddingSize)
-            backward = GRU(N_hidden=self.N_hidden, N_in=self.EmbeddingSize, backwards=True)
+            forward = LSTM(N_hidden=self.N_hidden, N_in=self.EmbeddingSize)
+            backward = LSTM(N_hidden=self.N_hidden, N_in=self.EmbeddingSize, backwards=True)
         else:
             forward = RNN(N_hidden=self.N_hidden, N_in=self.EmbeddingSize)
             backward = RNN(N_hidden=self.N_hidden, N_in=self.EmbeddingSize, backwards=True)
@@ -74,7 +74,7 @@ class OAGRU(ModelBase):
         else:
             Oq = T.max(question_lstm_matrix, axis=0)
         Wam = theano.shared(sample_weights(2 * self.N_hidden, 2 * self.N_hidden), name='Wam')
-        Wms = theano.shared(sample_weights(2 * self.N_hidden), name='Wms')
+        Wms = theano.shared(rng.uniform(-0.3, 0.3, size=(2 * self.N_hidden)), name='Wms')
         Wqm = theano.shared(sample_weights(2 * self.N_hidden, 2 * self.N_hidden), name='Wqm')
 
         def get_final_result(answer_lstm_matrix):
@@ -86,9 +86,8 @@ class OAGRU(ModelBase):
                 Saq_before_softmax = T.nnet.sigmoid(T.dot(answer_lstm_matrix, Wam) + WqmOq)
 
                 Saq = T.nnet.softmax(T.dot(Saq_before_softmax, Wms))
-                HatHat = T.dot(T.diag(T.flatten(Saq)), answer_lstm_matrix)
+                Oa = T.dot(answer_lstm_matrix, T.flatten(Saq))
 
-                Oa = T.sum(HatHat, axis=0)
             return Oa
 
         oa_yes = get_final_result(answer_yes_lstm_matrix)
@@ -137,8 +136,8 @@ class OAGRU(ModelBase):
             forward = GRU(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize)
             backward = GRU(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize, backwards=True)
         elif self.RNN_MODE == 'LSTM':
-            forward = GRU(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize)
-            backward = GRU(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize, backwards=True)
+            forward = LSTM(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize)
+            backward = LSTM(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize, backwards=True)
         else:
             forward = RNN(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize)
             backward = RNN(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize, backwards=True)
