@@ -86,7 +86,7 @@ class OAGRU(ModelBase):
                 Saq_before_softmax = T.nnet.sigmoid(T.dot(answer_lstm_matrix, Wam) + WqmOq)
 
                 Saq = T.nnet.softmax(T.dot(Saq_before_softmax, Wms))
-                Oa = T.dot(answer_lstm_matrix, T.flatten(Saq))
+                Oa = T.dot(T.flatten(Saq), answer_lstm_matrix)
 
             return Oa
 

@@ -154,7 +154,7 @@ def build_model_sample():
                 Saq_before_softmax = T.nnet.sigmoid(T.dot(answer_lstm_matrix, Wam) + WqmOq)
 
                 Saq = T.nnet.softmax(T.dot(Saq_before_softmax, Wms))
-                Oa = T.dot(answer_lstm_matrix, T.flatten(Saq))
+                Oa = T.dot(T.flatten(Saq),answer_lstm_matrix)
 
             return Oa
 
@@ -183,15 +183,15 @@ def build_model_sample():
         print 'compiling functions'
 
         train = theano.function([In_quesiotion, In_answer_right, In_answer_wrong],
-                                outputs=loss,
+                                outputs=oa_yes,
+                                on_unused_input='ignore',
                                 # updates=updates,
                                 allow_input_downcast=True)
-        test = theano.function([In_quesiotion, In_answer_right], outputs=predict_yes, on_unused_input='ignore')
-        print 'build model done!'
-        return train, test
-question = np.random.random_integers(1, 8, size=(5, 14))
-yes = np.random.random_integers(1, 23, size=(5, 9))
-no = np.random.random_integers(1, 83, size=(5, 33))
+
+        return train
+question = np.random.random_integers(1, 8, size=(14))
+yes = np.random.random_integers(1, 23, size=(9))
+no = np.random.random_integers(1, 83, size=(33))
 
 train = build_model_sample()
 cc = train(question, yes, no)
