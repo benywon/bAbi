@@ -23,7 +23,6 @@ class IAGRU(ModelBase):
         self.print_model_info(model_name='OAGRU')
         self.RNN_MODE = 'GRU'
 
-
     @ModelBase.print_model_info
     def print_model_info(self, model_name='OAGRU'):
         """
@@ -38,8 +37,9 @@ class IAGRU(ModelBase):
         print 'Margin:\t' + str(self.Margin)
         print 'negative sample size:\t' + str(self.sampling)
         print 'RNN mode:\t' + self.RNN_MODE
+
     def build_model_sample(self, only_for_test=False):
-        print 'start building model IAGRU sample...'
+        print 'start building model OAGRU sample...'
         In_quesiotion = T.ivector('in_question')
         In_answer_right = T.ivector('in_answer_right')
         In_answer_wrong = T.ivector('in_answer_wrong')
@@ -49,8 +49,15 @@ class IAGRU(ModelBase):
         in_answer_wrong_embedding = EmbeddingMatrix[In_answer_wrong]
         # this is the shared function
 
-        forward = GRU(N_hidden=self.N_hidden, N_in=self.EmbeddingSize)
-        backward = GRU(N_hidden=self.N_hidden, N_in=self.EmbeddingSize, backwards=True)
+        if self.RNN_MODE == 'GRU':
+            forward = GRU(N_hidden=self.N_hidden, N_in=self.EmbeddingSize)
+            backward = GRU(N_hidden=self.N_hidden, N_in=self.EmbeddingSize, backwards=True)
+        elif self.RNN_MODE == 'LSTM':
+            forward = GRU(N_hidden=self.N_hidden, N_in=self.EmbeddingSize)
+            backward = GRU(N_hidden=self.N_hidden, N_in=self.EmbeddingSize, backwards=True)
+        else:
+            forward = RNN(N_hidden=self.N_hidden, N_in=self.EmbeddingSize)
+            backward = RNN(N_hidden=self.N_hidden, N_in=self.EmbeddingSize, backwards=True)
 
         def get_gru_representation(In_embedding):
             forward.build(In_embedding)
