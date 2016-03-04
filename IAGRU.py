@@ -137,9 +137,15 @@ class IAGRU(ModelBase):
         in_answer_right_embeddings = EmbeddingMatrix[In_answer_right]
         in_answer_wrong_embeddings = EmbeddingMatrix[In_answer_wrong]
         # this is the shared function
-
-        forward = GRU(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize)
-        backward = GRU(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize, backwards=True)
+        if self.RNN_MODE == 'GRU':
+            forward = GRU(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize)
+            backward = GRU(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize, backwards=True)
+        elif self.RNN_MODE == 'LSTM':
+            forward = GRU(N_hidden=self.N_hidden,  batch_mode=True, N_in=self.EmbeddingSize)
+            backward = GRU(N_hidden=self.N_hidden,  batch_mode=True, N_in=self.EmbeddingSize, backwards=True)
+        else:
+            forward = RNN(N_hidden=self.N_hidden,  batch_mode=True, N_in=self.EmbeddingSize)
+            backward = RNN(N_hidden=self.N_hidden, batch_mode=True,  N_in=self.EmbeddingSize, backwards=True)
 
         def get_gru_representation(In_embedding):
             forward.build(In_embedding)

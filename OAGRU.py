@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
-from IAGRU import sigmoids
 from ModelBase import ModelBase
-import theano.tensor as T
-import theano
 
 from RNN import *
 from public_functions import *
@@ -84,12 +81,9 @@ class OAGRU(ModelBase):
             else:
                 WqmOq = T.dot(Wqm, Oq)
 
-                # Saq_before_softmax, _ = theano.scan(lambda v: T.tanh(T.dot(v, Wam) + WqmOq), sequences=answer_lstm)
                 Saq_before_softmax = T.nnet.sigmoid(T.dot(answer_lstm_matrix, Wam) + WqmOq)
-                # then we softmax this layer
 
                 Saq = T.nnet.softmax(T.dot(Saq_before_softmax, Wms))
-
                 HatHat = T.dot(T.diag(T.flatten(Saq)), answer_lstm_matrix)
 
                 Oa = T.sum(HatHat, axis=0)
@@ -124,5 +118,105 @@ class OAGRU(ModelBase):
                                 updates=updates,
                                 allow_input_downcast=True)
         test = theano.function([In_quesiotion, In_answer_right], outputs=predict_yes, on_unused_input='ignore')
+        print 'build model done!'
+        return train, test
+
+    def build_model_batch(self):
+        print 'start building model OAGRU batch...'
+        In_quesiotion = T.imatrix('in_question')
+        In_answer_right = T.imatrix('in_answer_right')
+        In_answer_wrong = T.imatrix('in_answer_wrong')
+        EmbeddingMatrix = theano.shared(np.asanyarray(self.wordEmbedding, dtype='float64'), name='WordEmbedding', )
+        in_question_embeddings = EmbeddingMatrix[In_quesiotion]
+        in_answer_right_embeddings = EmbeddingMatrix[In_answer_right]
+        in_answer_wrong_embeddings = EmbeddingMatrix[In_answer_wrong]
+        # this is the shared function
+        if self.RNN_MODE == 'GRU':
+            forward = GRU(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize)
+            backward = GRU(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize, backwards=True)
+        elif self.RNN_MODE == 'LSTM':
+            forward = GRU(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize)
+            backward = GRU(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize, backwards=True)
+        else:
+            forward = RNN(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize)
+            backward = RNN(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize, backwards=True)
+
+        Wam = theano.shared(sample_weights(2 * self.N_hidden, 2 * self.N_hidden), name='Wam')
+        Wms = theano.shared(sample_weights(2 * self.N_hidden), name='Wms')
+        Wqm = theano.shared(sample_weights(2 * self.N_hidden, 2 * self.N_hidden), name='Wqm')
+
+        def get_gru_representation(In_embedding):
+            forward.build(In_embedding)
+            backward.build(In_embedding)
+            lstm_forward = forward.get_hidden()
+            lstm_backward = backward.get_hidden()
+            if self.use_the_last_hidden_variable:
+                return T.concatenate([lstm_forward, lstm_backward[::-1]], axis=2)
+            else:
+                return T.concatenate([lstm_forward, lstm_backward], axis=2)
+
+        question_lstm_matrix = get_gru_representation(in_question_embeddings)
+        answer_yes_lstm_matrix=get_gru_representation(in_answer_right_embeddings)
+        answer_no_lstm_matrix=get_gru_representation(in_answer_wrong_embeddings)
+
+        def get_output(In_matrix):
+            if self.use_the_last_hidden_variable:
+                Oq = In_matrix[-1]
+            else:
+                if self.max_ave_pooling == 'ave':
+                    Oq = T.mean(In_matrix, axis=0)
+                else:
+                    Oq = T.max(In_matrix, axis=0)
+            return Oq
+
+
+        def get_final_result(answer_lstm_matrix,question_representation):
+            if not self.attention:
+                Oa = T.mean(answer_lstm_matrix, axis=0)
+            else:
+                WqmOq = T.dot(Wqm, question_representation)
+
+                # Saq_before_softmax, _ = theano.scan(lambda v: T.tanh(T.dot(v, Wam) + WqmOq), sequences=answer_lstm)
+                Saq_before_softmax = T.nnet.sigmoid(T.dot(answer_lstm_matrix, Wam) + WqmOq)
+                # then we softmax this layer
+
+                Saq = T.nnet.softmax(T.dot(Saq_before_softmax, Wms))
+
+                HatHat = T.dot(T.diag(T.flatten(Saq)), answer_lstm_matrix)
+
+                Oa = T.sum(HatHat, axis=0)
+            return Oa
+
+
+        question_representation = get_output(question_lstm_matrix)
+        answer_yes_lstm_matrix = trans_representationfromquestion(in_answer_right_embeddings, question_representation)
+        answer_no_lstm_matrix = trans_representationfromquestion(in_answer_wrong_embeddings, question_representation)
+
+        oa_yes = get_output(answer_yes_lstm_matrix)
+        oa_no = get_output(answer_no_lstm_matrix)
+
+        predict_yes, _ = theano.scan(cosine, sequences=[oa_yes, question_representation])
+        predict_no, _ = theano.scan(cosine, sequences=[oa_no, question_representation])
+
+        margin = predict_yes - predict_no
+        loss = T.mean(T.maximum(0, self.Margin - margin))
+
+        all_params = forward.get_parameter()
+        all_params.extend(backward.get_parameter())
+
+        self.parameter = all_params
+        updates = self.get_update(loss=loss)
+        loss = self.add_l1_l2_norm(loss=loss)
+
+        print 'start compile function...'
+        train = theano.function([In_quesiotion, In_answer_right, In_answer_wrong],
+                                outputs=loss,
+                                updates=updates,
+                                allow_input_downcast=True)
+
+        test = theano.function([In_quesiotion, In_answer_right],
+                               outputs=predict_yes[0],
+                               on_unused_input='ignore',
+                               allow_input_downcast=True)
         print 'build model done!'
         return train, test
