@@ -38,7 +38,14 @@ class OAGRU(ModelBase):
         print 'negative sample size:\t' + str(self.sampling)
         print 'RNN mode:\t' + self.RNN_MODE
 
-    def build_model_sample(self, only_for_test=False):
+    def build_model_sample(self):
+        """
+        if you are in classfication mode
+        In_quesiotion is the premise or the first sentence
+        In_answer_right is the hypothesis or second sentence
+        In_answer_wrong should be the true distribution
+        :return:
+        """
         print 'start building model OAGRU sample...'
         In_quesiotion = T.ivector('in_question')
         In_answer_right = T.ivector('in_answer_right')
@@ -96,11 +103,18 @@ class OAGRU(ModelBase):
         all_params = forward.get_parameter()
         all_params.extend(backward.get_parameter())
 
-        predict_yes = cosine(oa_yes, Oq)
-        predict_no = cosine(oa_no, Oq)
+        if self.classfication:
+            Wout = theano.shared(sample_weights(4 * self.N_hidden, self.N_out), name='Wout')
+            representation = T.concatenate(Oq, oa_yes)
+            prediction = T.dot(representation, Wout)
+            loss = T.nnet.categorical_crossentropy(prediction, In_answer_wrong)
+            all_params.append(Wout)
+        else:
+            predict_yes = cosine(oa_yes, Oq)
+            predict_no = cosine(oa_no, Oq)
 
-        margin = predict_yes - predict_no
-        loss = T.maximum(0, self.Margin - margin)
+            margin = predict_yes - predict_no
+            loss = T.maximum(0, self.Margin - margin)
         our_parameter = [Wam, Wms, Wqm]
         if self.attention:
             all_params.extend(our_parameter)
@@ -108,7 +122,6 @@ class OAGRU(ModelBase):
         if self.Train_embedding:
             all_params.append(EmbeddingMatrix)
         self.parameter = all_params
-        print 'calc parameters'
 
         updates = self.get_update(loss=loss)
         loss = self.add_l1_l2_norm(loss=loss)
@@ -183,15 +196,32 @@ class OAGRU(ModelBase):
         question_representations = get_output(question_lstm_matrix)
         oa_yes = get_final_result(answer_yes_lstm_matrix, question_representations)
         oa_no = get_final_result(answer_no_lstm_matrix, question_representations)
-        predict_yes, _ = theano.scan(cosine, sequences=[oa_yes, question_representations])
-        predict_no, _ = theano.scan(cosine, sequences=[oa_no, question_representations])
-
-        margin = predict_yes - predict_no
-        loss = T.mean(T.maximum(0, self.Margin - margin))
 
         all_params = forward.get_parameter()
         all_params.extend(backward.get_parameter())
+
+        if self.classfication:
+            Wout = theano.shared(sample_weights(4 * self.N_hidden, self.N_out), name='Wout')
+            representation = T.concatenate(question_representations, oa_yes)
+            prediction = T.dot(representation, Wout)
+            loss = T.nnet.categorical_crossentropy(prediction, In_answer_wrong)
+            all_params.append(Wout)
+        else:
+            predict_yes, _ = theano.scan(cosine, sequences=[oa_yes, question_representations])
+            predict_no, _ = theano.scan(cosine, sequences=[oa_no, question_representations])
+
+            margin = predict_yes - predict_no
+            loss = T.mean(T.maximum(0, self.Margin - margin))
+
+        our_parameter = [Wam, Wms, Wqm]
+        if self.attention:
+            all_params.extend(our_parameter)
+
+        if self.Train_embedding:
+            all_params.append(EmbeddingMatrix)
         self.parameter = all_params
+
+
         updates = self.get_update(loss=loss)
         loss = self.add_l1_l2_norm(loss=loss)
 
@@ -202,7 +232,7 @@ class OAGRU(ModelBase):
                                 allow_input_downcast=True)
 
         test = theano.function([In_quesiotion, In_answer_right],
-                               outputs=predict_yes[0],
+                               outputs=prediction[0] if self.classfication else predict_yes[0],
                                on_unused_input='ignore',
                                allow_input_downcast=True)
         print 'build model done!'

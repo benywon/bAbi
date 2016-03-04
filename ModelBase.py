@@ -17,8 +17,10 @@ class ModelBase():
     any model should be inherit from this class
     """
 
-    def __init__(self, data, N_hidden=100, optmizer='sgd', batch_training=False, sampling=0, Train_embedding=False,
+    def __init__(self, data, classfication=False, N_hidden=100, optmizer='sgd', batch_training=False, sampling=0,
+                 Train_embedding=False,
                  learning_rate=0.01, l1=0.00001, l2=0.00001, epochs=50, **kwargs):
+        self.classfication = classfication
         self.batch_training = batch_training
         self.Train_embedding = Train_embedding
         self.sampling = sampling
@@ -37,6 +39,8 @@ class ModelBase():
             self.EmbeddingSize = data.EmbeddingSize
             self.vocabularySize = data.vocabularySize
             self.max_batch_size = data.max_batch_size
+        if classfication:
+            self.N_out = kwargs['N_out']
 
     @classmethod
     def print_model_info(cls, function):
@@ -61,7 +65,11 @@ class ModelBase():
     def build_model(self):
         """
         should be re-implement by child class
-        :return: None
+        if you are in classfication mode
+        In_quesiotion is the premise or the first sentence
+        In_answer_right is the hypothesis or second sentence
+        In_answer_wrong should be the true distribution
+        :return:
         """
         if self.batch_training:
             self.train_function, self.test_function = self.build_model_batch()
