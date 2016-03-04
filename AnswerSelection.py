@@ -2,20 +2,37 @@
 import sys
 
 from IAGRU import IAGRU
-# from QASent import QASentdataPreprocess
-# from WikiQA import WikiQAdataPreprocess
+from QASent import QASentdataPreprocess
+from WikiQA import WikiQAdataPreprocess
 import numpy as np
 
+from OAGRU import OAGRU
 from insuranceQA import insuranceQAPreprocess
 
 __author__ = 'benywon'
 
+insuranceQA = 'insuranceQA'
+WikiQA = 'WikiQA'
+QASent = 'QASent'
+IAGru = 'IAGru'
+OAGru = 'OAGru'
 
-class ASiagru(IAGRU, insuranceQAPreprocess):
+
+class AnswerSelection(IAGRU, OAGRU, insuranceQAPreprocess, WikiQAdataPreprocess, QASentdataPreprocess):
     def __init__(self,
+                 MODEL='IAGRU',
+                 DATASET='insuranceQA',
                  **kwargs):
-        insuranceQAPreprocess.__init__(self, **kwargs)
-        IAGRU.__init__(self, **kwargs)
+        if DATASET == insuranceQA:
+            insuranceQAPreprocess.__init__(self, **kwargs)
+        elif DATASET == WikiQA:
+            WikiQAdataPreprocess.__init__(self, **kwargs)
+        else:
+            QASentdataPreprocess.__init__(self, **kwargs)
+        if MODEL == IAGru:
+            IAGRU.__init__(self, **kwargs)
+        else:
+            OAGRU.__init__(self, **kwargs)
 
     def Train(self):
         print 'start training ' + self.dataset_name + ' IAGRU...'
@@ -69,7 +86,7 @@ class ASiagru(IAGRU, insuranceQAPreprocess):
 
 
 if __name__ == '__main__':
-    c = ASiagru(optmizer='adadelta', batch_training=True, sampling=5, reload=True, Margin=0.15,
-                use_the_last_hidden_variable=False, use_clean=True, epochs=50,Max_length=50,
-                N_hidden=150)
+    c = AnswerSelection(optmizer='adadelta', batch_training=True, sampling=5, reload=True, Margin=0.15,
+                        use_the_last_hidden_variable=False, use_clean=True, epochs=50, Max_length=50,
+                        N_hidden=150)
     c.Train()
