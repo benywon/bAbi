@@ -30,9 +30,9 @@ class AnswerSelection:
         else:
             self.Data = QASentForServerdataPreprocess(**kwargs)
         if MODEL == IAGru:
-            self.Model = IAGRU(**kwargs)
+            self.Model = IAGRU(data=self.Data, **kwargs)
         else:
-            self.Model = OAGRU(**kwargs)
+            self.Model = OAGRU(data=self.Data, **kwargs)
 
     def Train(self):
         print 'start training ' + self.Data.dataset_name + ' IAGRU...'
