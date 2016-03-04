@@ -20,13 +20,13 @@ class QASentdataPreprocess(dataPreprocess):
         append_str += '_clean' if self.use_clean else ''
         self.data_pickle_path = self.path + 'QAsent' + append_str + '.pickle'
         if self.reload:
-            self.build_data_set()
+            self.__build_data_set__()
         else:
             self.load_data()
         self.calc_data_stat()
         self.dataset_name = 'QASent'
 
-    def build_data_set(self):
+    def __build_data_set__(self):
         print 'start loading data from original file'
         if self.use_clean:
             trainfilepath = self.path + 'train-less-than-40.manual-edit.xml'

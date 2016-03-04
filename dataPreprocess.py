@@ -42,9 +42,6 @@ class dataPreprocess:
         self.test_number = len(self.TEST)
         self.vocabularySize = len(self.word2id)
 
-    def build_data_set(self):
-        pass
-
     def get_sentence_id_list(self, sentence, add_vacabulary=True, divider=' '):
         if sentence.endswith('?'):
             if not sentence.replace('?', '').endswith(' '):

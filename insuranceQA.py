@@ -21,13 +21,13 @@ class insuranceQAPreprocess(dataPreprocess):
         append_str = '_batch' if self.batch_training else ''
         self.data_pickle_path = self.path + 'insuranceQA' + append_str + '.pickle'
         if self.reload:
-            self.build_data_set()
+            self.__build_data_set__()
         else:
             self.load_data()
         self.calc_data_stat()
         self.dataset_name = 'insuranceQA'
 
-    def build_data_set(self):
+    def __build_data_set__(self):
         print 'start loading data from original file'
         trainfilepath = self.path + 'question.train.token_idx.label'
         testfilepath1 = self.path + 'question.test1.label.token_idx.pool'
@@ -118,6 +118,3 @@ class insuranceQAPreprocess(dataPreprocess):
         self.transfer_data(add_dev=False)
         print 'load data done'
 
-
-if __name__ == '__main__':
-    insuranceQAPreprocess(batch_training=True, reload=True)

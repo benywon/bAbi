@@ -6,18 +6,20 @@ import cPickle
 import lasagne
 import theano.tensor as T
 
+from dataPreprocess import dataPreprocess
+
 __author__ = 'benywon'
 
 
-class ModelBase:
+class ModelBase():
     """
     this is the base to all model
     any model should be inherit from this class
     """
 
-    def __init__(self, N_hidden=100, optmizer='sgd',
-                 sampling=0,Train_embedding=False,
+    def __init__(self, data, N_hidden=100, optmizer='sgd', batch_training=False, sampling=0, Train_embedding=False,
                  learning_rate=0.01, l1=0.00001, l2=0.00001, epochs=50, **kwargs):
+        self.batch_training = batch_training
         self.Train_embedding = Train_embedding
         self.sampling = sampling
         self.epochs = epochs
@@ -29,6 +31,7 @@ class ModelBase:
         self.parameter = {}
         self.model_file_base_path = ''
         self.train_function = self.test_function = None
+        self.data = data
 
     @classmethod
     def print_model_info(cls, function):
@@ -43,7 +46,7 @@ class ModelBase:
             print 'epochs size:\t' + str(self.epochs)
             print 'batch training?:\t' + str(self.batch_training)
             if self.batch_training:
-                print 'maximum batch size:\t'+self.max_batch_size
+                print 'maximum batch size:\t' + str(self.max_batch_size)
             rst = function(self, *args, **kwargs)
             print '------------------------------------------------------------'
             return rst
@@ -60,10 +63,10 @@ class ModelBase:
         else:
             self.train_function, self.test_function = self.build_model_sample()
 
-    def build_model_sample(self):
+    def build_model_batch(self):
         pass
 
-    def build_model_batch(self):
+    def build_model_sample(self):
         pass
 
     def save_model(self, append=None):

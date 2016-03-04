@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
+import numpy as np
 import sys
 
 from IAGRU import IAGRU
-from QASent import QASentdataPreprocess
-from WikiQA import WikiQAdataPreprocess
-import numpy as np
-
 from OAGRU import OAGRU
+from QASentForServer import QASentForServerdataPreprocess
+from WikiQA import WikiQAdataPreprocess
 from insuranceQA import insuranceQAPreprocess
 
 __author__ = 'benywon'
@@ -14,57 +13,59 @@ __author__ = 'benywon'
 insuranceQA = 'insuranceQA'
 WikiQA = 'WikiQA'
 QASent = 'QASent'
+
 IAGru = 'IAGru'
 OAGru = 'OAGru'
 
 
-class AnswerSelection(IAGRU, OAGRU, insuranceQAPreprocess, WikiQAdataPreprocess, QASentdataPreprocess):
+class AnswerSelection:
     def __init__(self,
-                 MODEL='IAGRU',
-                 DATASET='insuranceQA',
+                 MODEL=IAGru,
+                 DATASET=WikiQA,
                  **kwargs):
         if DATASET == insuranceQA:
-            insuranceQAPreprocess.__init__(self, **kwargs)
+            self.Data = insuranceQAPreprocess(**kwargs)
         elif DATASET == WikiQA:
-            WikiQAdataPreprocess.__init__(self, **kwargs)
+            self.Data = WikiQAdataPreprocess(**kwargs)
         else:
-            QASentdataPreprocess.__init__(self, **kwargs)
+            self.Data = QASentForServerdataPreprocess(**kwargs)
         if MODEL == IAGru:
-            IAGRU.__init__(self, **kwargs)
+            self.Model = IAGRU(**kwargs)
         else:
-            OAGRU.__init__(self, **kwargs)
+            self.Model = OAGRU(**kwargs)
 
     def Train(self):
-        print 'start training ' + self.dataset_name + ' IAGRU...'
-        for epoch in xrange(self.epochs):
+        print 'start training ' + self.Data.dataset_name + ' IAGRU...'
+        for epoch in xrange(self.Model.epochs):
             print 'start epoch:' + str(epoch)
-            for i in xrange(self.train_number):
+            for i in xrange(self.Data.train_number):
                 batch_length = ''
-                if self.batch_training:
-                    question = self.TRAIN[i][0]
+                if self.Data.batch_training:
+                    question = self.Data.TRAIN[i][0]
                     batch_length = ' batch size:' + str(len(question))
-                    answer_yes = self.TRAIN[i][1]
-                    answer_no = self.TRAIN[i][2]
+                    answer_yes = self.Data.TRAIN[i][1]
+                    answer_no = self.Data.TRAIN[i][2]
                 else:
-                    question = self.TRAIN[0][i]
-                    answer_yes = self.TRAIN[1][i]
-                    answer_no = self.TRAIN[2][i]
-                loss = self.train_function(question, answer_yes, answer_no)
+                    question = self.Data.TRAIN[0][i]
+                    answer_yes = self.Data.TRAIN[1][i]
+                    answer_no = self.Data.TRAIN[2][i]
+                loss = self.Model.train_function(question, answer_yes, answer_no)
                 b = (
-                    "Process\t" + str(i) + " in total:" + str(self.train_number) + batch_length + ' loss: ' + str(loss))
+                    "Process\t" + str(i) + " in total:" + str(self.Data.train_number) + batch_length + ' loss: ' + str(
+                        loss))
                 sys.stdout.write('\r' + b)
             MAP, MRR = self.Test()
-            append_name = self.dataset_name + '_MAP_' + str(MAP) + '_MRR+' + str(MRR)
-            self.save_model(append=append_name)
+            append_name = self.Data.dataset_name + '_MAP_' + str(MAP) + '_MRR+' + str(MRR)
+            self.Model.save_model(append=append_name)
 
     def Test(self):
         print 'start testing...'
         final_result_MAP = []
         final_result_MRR = []
-        for one_pack in self.TEST:
+        for one_pack in self.Data.TEST:
             batch_result = []
             for one in one_pack:
-                out = self.test_function(one[0], one[1])
+                out = self.Model.test_function(one[0], one[1])
                 batch_result.append([out, one[2]])
             batch_result.sort(key=lambda x: x[0], reverse=True)
             result = 0.
@@ -86,7 +87,7 @@ class AnswerSelection(IAGRU, OAGRU, insuranceQAPreprocess, WikiQAdataPreprocess,
 
 
 if __name__ == '__main__':
-    c = AnswerSelection(optmizer='adadelta', batch_training=True, sampling=5, reload=True, Margin=0.15,
+    c = AnswerSelection(optmizer='adadelta', MODEL=OAGru, batch_training=True, sampling=5, reload=False, Margin=0.15,
                         use_the_last_hidden_variable=False, use_clean=True, epochs=50, Max_length=50,
                         N_hidden=150)
     c.Train()

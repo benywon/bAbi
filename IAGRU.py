@@ -13,9 +13,10 @@ sigmoids = lambda x: 1 / (1 + T.exp(-x))
 
 
 class IAGRU(ModelBase):
-    def __init__(self, max_ave_pooling='ave', use_the_last_hidden_variable=False, Margin=0.1,
+    def __init__(self, RNN_MODE='GRU',max_ave_pooling='ave', use_the_last_hidden_variable=False, Margin=0.1,
                  **kwargs):
         ModelBase.__init__(self, **kwargs)
+        self.RNN_MODE = RNN_MODE
         self.Margin = Margin
         self.use_the_last_hidden_variable = use_the_last_hidden_variable
         self.max_ave_pooling = max_ave_pooling
@@ -23,7 +24,7 @@ class IAGRU(ModelBase):
         assert len(self.wordEmbedding) > 0, 'you have not initiate data!!!'
         self.build_model()
         self.print_model_info(model_name='IAGRU')
-        self.RNN_MODE = 'GRU'
+
 
     @ModelBase.print_model_info
     def print_model_info(self, model_name='IAGRU'):
@@ -34,8 +35,8 @@ class IAGRU(ModelBase):
         """
         print 'use the last hidden variable as output:\t' + str(self.use_the_last_hidden_variable)
         print 'max or ave pooling?\t' + str(self.max_ave_pooling)
-        print 'Embedding size:\t' + str(self.EmbeddingSize)
-        print 'dictionary size:\t' + str(self.vocabularySize)
+        print 'Embedding size:\t' + str(self.data.EmbeddingSize)
+        print 'dictionary size:\t' + str(self.data.vocabularySize)
         print 'Margin:\t' + str(self.Margin)
         print 'negative sample size:\t' + str(self.sampling)
         print 'RNN mode:\t' + self.RNN_MODE
@@ -45,21 +46,21 @@ class IAGRU(ModelBase):
         In_quesiotion = T.ivector('in_question')
         In_answer_right = T.ivector('in_answer_right')
         In_answer_wrong = T.ivector('in_answer_wrong')
-        EmbeddingMatrix = theano.shared(np.asanyarray(self.wordEmbedding, dtype='float64'), name='WordEmbedding', )
+        EmbeddingMatrix = theano.shared(np.asanyarray(self.data.wordEmbedding, dtype='float64'), name='WordEmbedding', )
         in_question_embedding = EmbeddingMatrix[In_quesiotion]
         in_answer_right_embedding = EmbeddingMatrix[In_answer_right]
         in_answer_wrong_embedding = EmbeddingMatrix[In_answer_wrong]
         # this is the shared function
 
         if self.RNN_MODE == 'GRU':
-            forward = GRU(N_hidden=self.N_hidden, N_in=self.EmbeddingSize)
-            backward = GRU(N_hidden=self.N_hidden, N_in=self.EmbeddingSize, backwards=True)
+            forward = GRU(N_hidden=self.N_hidden, N_in=self.data.EmbeddingSize)
+            backward = GRU(N_hidden=self.N_hidden, N_in=self.data.EmbeddingSize, backwards=True)
         elif self.RNN_MODE == 'LSTM':
-            forward = GRU(N_hidden=self.N_hidden, N_in=self.EmbeddingSize)
-            backward = GRU(N_hidden=self.N_hidden, N_in=self.EmbeddingSize, backwards=True)
+            forward = GRU(N_hidden=self.N_hidden, N_in=self.data.EmbeddingSize)
+            backward = GRU(N_hidden=self.N_hidden, N_in=self.data.EmbeddingSize, backwards=True)
         else:
-            forward = RNN(N_hidden=self.N_hidden, N_in=self.EmbeddingSize)
-            backward = RNN(N_hidden=self.N_hidden, N_in=self.EmbeddingSize, backwards=True)
+            forward = RNN(N_hidden=self.N_hidden, N_in=self.data.EmbeddingSize)
+            backward = RNN(N_hidden=self.N_hidden, N_in=self.data.EmbeddingSize, backwards=True)
 
         def get_gru_representation(In_embedding):
             forward.build(In_embedding)
@@ -86,7 +87,7 @@ class IAGRU(ModelBase):
                     Oq = T.max(In_matrix, axis=0)
             return Oq
 
-        attention_projection = theano.shared(sample_weights(self.EmbeddingSize, 2 * self.N_hidden),
+        attention_projection = theano.shared(sample_weights(self.data.EmbeddingSize, 2 * self.N_hidden),
                                              name='attention_projection')
         question_lstm_matrix = get_gru_representation(in_question_embedding)
 
@@ -132,20 +133,20 @@ class IAGRU(ModelBase):
         In_quesiotion = T.imatrix('in_question')
         In_answer_right = T.imatrix('in_answer_right')
         In_answer_wrong = T.imatrix('in_answer_wrong')
-        EmbeddingMatrix = theano.shared(np.asanyarray(self.wordEmbedding, dtype='float64'), name='WordEmbedding', )
+        EmbeddingMatrix = theano.shared(np.asanyarray(self.data.wordEmbedding, dtype='float64'), name='WordEmbedding', )
         in_question_embeddings = EmbeddingMatrix[In_quesiotion]
         in_answer_right_embeddings = EmbeddingMatrix[In_answer_right]
         in_answer_wrong_embeddings = EmbeddingMatrix[In_answer_wrong]
         # this is the shared function
         if self.RNN_MODE == 'GRU':
-            forward = GRU(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize)
-            backward = GRU(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize, backwards=True)
+            forward = GRU(N_hidden=self.N_hidden, batch_mode=True, N_in=self.data.EmbeddingSize)
+            backward = GRU(N_hidden=self.N_hidden, batch_mode=True, N_in=self.data.EmbeddingSize, backwards=True)
         elif self.RNN_MODE == 'LSTM':
-            forward = GRU(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize)
-            backward = GRU(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize, backwards=True)
+            forward = GRU(N_hidden=self.N_hidden, batch_mode=True, N_in=self.data.EmbeddingSize)
+            backward = GRU(N_hidden=self.N_hidden, batch_mode=True, N_in=self.data.EmbeddingSize, backwards=True)
         else:
-            forward = RNN(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize)
-            backward = RNN(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize, backwards=True)
+            forward = RNN(N_hidden=self.N_hidden, batch_mode=True, N_in=self.data.EmbeddingSize)
+            backward = RNN(N_hidden=self.N_hidden, batch_mode=True, N_in=self.data.EmbeddingSize, backwards=True)
 
         def get_gru_representation(In_embedding):
             forward.build(In_embedding)
@@ -157,7 +158,7 @@ class IAGRU(ModelBase):
             else:
                 return T.concatenate([lstm_forward, lstm_backward], axis=2)
 
-        attention_projection = theano.shared(sample_weights(self.EmbeddingSize, 2 * self.N_hidden),
+        attention_projection = theano.shared(sample_weights(self.data.EmbeddingSize, 2 * self.N_hidden),
                                              name='attention_projection')
         question_lstm_matrix = get_gru_representation(in_question_embeddings)
 
@@ -210,18 +211,6 @@ class IAGRU(ModelBase):
         print 'build model done!'
         return train, test
 
-    def unit_test(self):
-        ques = np.asmatrix([[1, 3, 2, 4, 54, 23], [1, 3, 2, 4, 24, 23]])
-        right = np.asarray([[1, 42, 4, 34, 23, 92, 12, 23], [1, 42, 4, 34, 23, 922, 12, 23]])
-        wron = np.asarray([[1, 3, 2, 4, 32, 12], [1, 3, 21, 4, 132, 12]])
-        self.wordEmbedding = np.zeros(shape=(200, 50))
-        self.EmbeddingSize = 50
-        self.N_hidden = 100
-        self.vocabularySize = 200
-        self.sampling = True
-        for i in range(1000):
-            cc = self.train_function(ques, right, wron)
-            print cc
 
 
 if __name__ == '__main__':
