@@ -1,7 +1,12 @@
 # -*- coding: utf-8 -*-
+from IAGRU import sigmoids
 from ModelBase import ModelBase
 import theano.tensor as T
 import theano
+
+from RNN import *
+from public_functions import *
+
 __author__ = 'benywon'
 
 
@@ -17,6 +22,7 @@ class IAGRU(ModelBase):
         self.build_model()
         self.print_model_info(model_name='OAGRU')
         self.RNN_MODE = 'GRU'
+
 
     @ModelBase.print_model_info
     def print_model_info(self, model_name='OAGRU'):
