@@ -17,7 +17,7 @@ class insuranceQAPreprocess(dataPreprocess):
         self.Max_length = Max_length
         self.neg_high = neg_high
         self.neg_low = neg_low
-        self.path = './data/insuranceQA/'
+        self.path = self.path_base + 'insuranceQA/'
         append_str = '_batch' if self.batch_training else ''
         self.data_pickle_path = self.path + 'insuranceQA' + append_str + '.pickle'
         if self.reload:

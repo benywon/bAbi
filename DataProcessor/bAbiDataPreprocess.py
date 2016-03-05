@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
 
-import re
-import cPickle
-
 from public_functions import *
 
 __author__ = 'benywon'
@@ -22,11 +19,11 @@ class bAbiDataPreprocess:
         else:
             number = '-10k'
             self.number = '10k'
-        self.objFilepath = './data/bAbi/data_' + self.number + '.pickle'
+        self.objFilepath = '../data/bAbi/data_' + self.number + '.pickle'
         if path is not None:
             self.filePath = path
         else:
-            self.filePath = './data/bAbi'
+            self.filePath = '../data/bAbi'
         self.filePath += '/en' + number + '/'
         self.word2id = {'_NONE_': 0}
         self.data = {}

@@ -2,11 +2,11 @@
 import numpy as np
 import sys
 
-from IAGRU import IAGRU
-from OAGRU import OAGRU
-from QASentForServer import QASentForServerdataPreprocess
-from WikiQA import WikiQAdataPreprocess
-from insuranceQA import insuranceQAPreprocess
+from DataProcessor.QASentForServer import QASentForServerdataPreprocess
+from DataProcessor.WikiQA import WikiQAdataPreprocess
+from DataProcessor.insuranceQA import insuranceQAPreprocess
+from NeuralModel.IAGRU import IAGRU
+from NeuralModel.OAGRU import OAGRU
 
 __author__ = 'benywon'
 
@@ -87,7 +87,8 @@ class AnswerSelection:
 
 
 if __name__ == '__main__':
-    c = AnswerSelection(optmizer='adadelta', MODEL=OAGru, DATASET=WikiQA, batch_training=False, sampling=3, reload=False,
+    c = AnswerSelection(optmizer='adadelta', MODEL=IAGru, DATASET=WikiQA, batch_training=False, sampling=3,
+                        reload=False,
                         Margin=0.15,
                         use_the_last_hidden_variable=False, use_clean=True, epochs=50, Max_length=50,
                         N_hidden=150)

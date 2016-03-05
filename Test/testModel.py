@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
-import numpy as np
-import theano.tensor as T
-import theano
 
-from RNN import *
+from NeuralModel.RNN import *
 from public_functions import *
 
 __author__ = 'benywon'

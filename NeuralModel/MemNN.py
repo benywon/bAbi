@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-import lasagne
 import sys
-
 import time
 
-from bAbiDataPreprocess import bAbiDataPreprocess
+import lasagne
+
+from DataProcessor.bAbiDataPreprocess import bAbiDataPreprocess
 from public_functions import *
 
 __author__ = 'benywon'

@@ -1,12 +1,9 @@
 # -*- coding: utf-8 -*-
-import time
-
 import cPickle
+import time
 
 import lasagne
 import theano.tensor as T
-
-from dataPreprocess import dataPreprocess
 
 __author__ = 'benywon'
 

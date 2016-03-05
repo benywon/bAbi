@@ -17,7 +17,7 @@ class WikiQAdataPreprocess(dataPreprocess):
         dataPreprocess.__init__(self, **kwargs)
         self.sampling = sampling
         self.using_YN_pair = None
-        self.path = './data/WikiQACorpus/'
+        self.path = self.path_base + 'WikiQACorpus/'
         append_str = '_batch' if self.batch_training else ''
         self.data_pickle_path = self.path + 'wikiQA_sample' + str(sampling) + append_str + '.pickle'
         if self.reload:
@@ -56,7 +56,7 @@ class WikiQAdataPreprocess(dataPreprocess):
             at_least_one_right = [questionPair[x] for x in questionPair if sum([z[2] for z in questionPair[x]]) > 0]
 
             if not train:
-                return [[[self.transfun(x[0],'int32'), self.transfun(x[1],'int32'), x[2]] for x in t] for t
+                return [[[self.transfun(x[0], 'int32'), self.transfun(x[1], 'int32'), x[2]] for x in t] for t
                         in at_least_one_right]
             else:
                 if sample > 0:
@@ -94,6 +94,7 @@ class WikiQAdataPreprocess(dataPreprocess):
         self.TEST = get_one_set(filepath=testfilepath)
         self.transfer_data()
         print 'load data done'
+
 
 if __name__ == '__main__':
     WikiQAdataPreprocess(reload=True)

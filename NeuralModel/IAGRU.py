@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import lasagne
 
 from ModelBase import ModelBase
 from RNN import *

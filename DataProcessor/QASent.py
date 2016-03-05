@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
-from collections import OrderedDict
 
-from dataPreprocess import dataPreprocess
 from lxml import html
 
+from dataPreprocess import dataPreprocess
 from public_functions import *
 
 __author__ = 'benywon'
@@ -15,7 +14,7 @@ class QASentdataPreprocess(dataPreprocess):
                  **kwargs):
         dataPreprocess.__init__(self, **kwargs)
         self.use_clean = use_clean
-        self.path = './data/QAsent/'
+        self.path = self.path_base + 'QAsent/'
         append_str = '_batch' if self.batch_training else ''
         append_str += '_clean' if self.use_clean else ''
         self.data_pickle_path = self.path + 'QAsent' + append_str + '.pickle'

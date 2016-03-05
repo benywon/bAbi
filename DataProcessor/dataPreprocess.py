@@ -34,6 +34,7 @@ class dataPreprocess:
         self.dev_number = 0
         self.test_number = 0
         self.dataset_name = ''
+        self.path_base = './data/'
         self.transfun = lambda x, y: np.asmatrix(x, dtype=y) if self.batch_training else np.asarray(x, dtype=y)
 
     def calc_data_stat(self):

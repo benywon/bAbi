@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*- 
 __author__ = 'benywon'
 import numpy as np
+
 import theano
 import theano.tensor as T
 
