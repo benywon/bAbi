@@ -43,9 +43,10 @@ class MSRPD(dataPreprocess):
                     q.append(sent1_ids)
                     yes.append(sent2_ids)
                     no.append(label)
-            target.append([x for x in q])
-            target.append([x for x in yes])
-            target.append([x for x in no])
+            target.append(q)
+            target.append(yes)
+            target.append(no)
+            return target
 
         self.TRAIN = get_one_set(trainfilepath)
         self.TEST = get_one_set(testfilepath)

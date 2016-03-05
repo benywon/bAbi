@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-import sys
 
 from DataProcessor.QASentForServer import QASentForServerdataPreprocess
 from DataProcessor.WikiQA import WikiQAdataPreprocess
 from DataProcessor.insuranceQA import insuranceQAPreprocess
 from NeuralModel.IAGRU import IAGRU
 from NeuralModel.OAGRU import OAGRU, OAGRU_small
+from TaskBase import TaskBases
 
 __author__ = 'benywon'
 
@@ -19,11 +19,9 @@ OAGru = 'OAGru'
 OAGru_SMALL = 'OAGru_small'
 
 
-class AnswerSelection:
-    def __init__(self,
-                 MODEL=IAGru,
-                 DATASET=WikiQA,
-                 **kwargs):
+class AnswerSelection(TaskBases):
+    def __init__(self, MODEL=IAGru, DATASET=WikiQA, **kwargs):
+        TaskBases.__init__(self)
         if DATASET == insuranceQA:
             self.Data = insuranceQAPreprocess(**kwargs)
         elif DATASET == WikiQA:
@@ -37,29 +35,11 @@ class AnswerSelection:
         else:
             self.Model = OAGRU(data=self.Data, **kwargs)
 
+    @TaskBases.Train
     def Train(self):
-        print 'start training ' + self.Data.dataset_name + '  ' + self.Model.Model_name + '...'
-        for epoch in xrange(self.Model.epochs):
-            print 'start epoch:' + str(epoch)
-            for i in xrange(self.Data.train_number):
-                batch_length = ''
-                if self.Data.batch_training:
-                    question = self.Data.TRAIN[i][0]
-                    batch_length = ' batch size:' + str(len(question))
-                    answer_yes = self.Data.TRAIN[i][1]
-                    answer_no = self.Data.TRAIN[i][2]
-                else:
-                    question = self.Data.TRAIN[0][i]
-                    answer_yes = self.Data.TRAIN[1][i]
-                    answer_no = self.Data.TRAIN[2][i]
-                loss = self.Model.train_function(question, answer_yes, answer_no)
-                b = (
-                    "Process\t" + str(i) + " in total:" + str(self.Data.train_number) + batch_length + ' loss: ' + str(
-                        loss))
-                sys.stdout.write('\r' + b)
-            MAP, MRR = self.Test()
-            append_name = self.Data.dataset_name + '_MAP_' + str(MAP) + '_MRR+' + str(MRR)
-            self.Model.save_model(append=append_name)
+        MAP, MRR = self.Test()
+        append_name = self.Data.dataset_name + '_MAP_' + str(MAP) + '_MRR_' + str(MRR)
+        self.Model.save_model(append_name)
 
     def Test(self):
         print 'start testing...'

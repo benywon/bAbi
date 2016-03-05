@@ -103,9 +103,10 @@ class IAGRU(ModelBase):
         all_params.append(attention_projection)
         if self.classfication:
             Wout = theano.shared(sample_weights(4 * self.N_hidden, self.N_out), name='Wout')
-            representation = T.concatenate(question_representation, oa_yes)
-            prediction = T.dot(representation, Wout)
+            representation = T.concatenate([question_representation, oa_yes], axis=0)
+            prediction = T.nnet.softmax_graph(T.dot(representation, Wout))
             loss = T.nnet.categorical_crossentropy(prediction, In_answer_wrong)
+            prediction_label = T.argmax(prediction)
             all_params.append(Wout)
         else:
             predict_yes = cosine(oa_yes, question_representation)
@@ -118,8 +119,8 @@ class IAGRU(ModelBase):
             all_params.append(EmbeddingMatrix)
         self.parameter = all_params
 
-        updates = self.get_update(loss=loss)
         loss = self.add_l1_l2_norm(loss=loss)
+        updates = self.get_update(loss=loss)
 
         print 'start compile function...'
 
@@ -128,7 +129,7 @@ class IAGRU(ModelBase):
                                 updates=updates,
                                 allow_input_downcast=True)
         test = theano.function([In_quesiotion, In_answer_right],
-                               outputs=prediction if self.classfication else predict_yes,
+                               outputs=prediction_label if self.classfication else predict_yes,
                                on_unused_input='ignore')
         print 'build model done!'
         return train, test
@@ -194,9 +195,10 @@ class IAGRU(ModelBase):
         all_params.append(attention_projection)
         if self.classfication:
             Wout = theano.shared(sample_weights(4 * self.N_hidden, self.N_out), name='Wout')
-            representation = T.concatenate(question_representation, oa_yes)
-            prediction = T.dot(representation, Wout)
+            representation = T.concatenate([question_representation, oa_yes], axis=1)
+            prediction = T.nnet.softmax(T.dot(representation, Wout))
             loss = T.nnet.categorical_crossentropy(prediction, In_answer_wrong)
+            prediction_label = T.argmax(prediction, axis=1)
             all_params.append(Wout)
         else:
             predict_yes, _ = theano.scan(cosine, sequences=[oa_yes, question_representation])
@@ -207,9 +209,9 @@ class IAGRU(ModelBase):
 
         self.parameter = all_params
 
-        updates = self.get_update(loss=loss)
-        loss = self.add_l1_l2_norm(loss=loss)
 
+        loss = self.add_l1_l2_norm(loss=loss)
+        updates = self.get_update(loss=loss)
         print 'start compile function...'
         train = theano.function([In_quesiotion, In_answer_right, In_answer_wrong],
                                 outputs=loss,
@@ -217,7 +219,7 @@ class IAGRU(ModelBase):
                                 allow_input_downcast=True)
 
         test = theano.function([In_quesiotion, In_answer_right],
-                               outputs=prediction[0] if self.classfication else predict_yes[0],
+                               outputs=prediction_label[0] if self.classfication else predict_yes[0],
                                on_unused_input='ignore',
                                allow_input_downcast=True)
         print 'build model done!'

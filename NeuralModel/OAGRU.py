@@ -123,8 +123,8 @@ class OAGRU(ModelBase):
             all_params.append(EmbeddingMatrix)
         self.parameter = all_params
 
-        updates = self.get_update(loss=loss)
         loss = self.add_l1_l2_norm(loss=loss)
+        updates = self.get_update(loss=loss)
         print 'compiling functions'
 
         train = theano.function([In_quesiotion, In_answer_right, In_answer_wrong],
@@ -221,8 +221,8 @@ class OAGRU(ModelBase):
             all_params.append(EmbeddingMatrix)
         self.parameter = all_params
 
-        updates = self.get_update(loss=loss)
         loss = self.add_l1_l2_norm(loss=loss)
+        updates = self.get_update(loss=loss)
 
         print 'start compile function...'
         train = theano.function([In_quesiotion, In_answer_right, In_answer_wrong],
@@ -355,8 +355,9 @@ class OAGRU_small(ModelBase):
             all_params.append(EmbeddingMatrix)
         self.parameter = all_params
 
-        updates = self.get_update(loss=loss)
         loss = self.add_l1_l2_norm(loss=loss)
+        updates = self.get_update(loss=loss)
+
         print 'compiling functions'
 
         train = theano.function([In_quesiotion, In_answer_right, In_answer_wrong],
@@ -453,8 +454,8 @@ class OAGRU_small(ModelBase):
             all_params.append(EmbeddingMatrix)
         self.parameter = all_params
 
-        updates = self.get_update(loss=loss)
         loss = self.add_l1_l2_norm(loss=loss)
+        updates = self.get_update(loss=loss)
 
         print 'start compile function...'
         train = theano.function([In_quesiotion, In_answer_right, In_answer_wrong],

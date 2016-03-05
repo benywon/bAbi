@@ -39,7 +39,10 @@ class dataPreprocess:
 
     def calc_data_stat(self):
         self.train_number = len(self.TRAIN) if self.batch_training else len(self.TRAIN[0])
-        self.dev_number = len(self.DEV) if self.batch_training else len(self.DEV[0])
+        if len(self.DEV) > 0:
+            self.dev_number = len(self.DEV) if self.batch_training else len(self.DEV[0])
+        else:
+            self.dev_number = 0
         self.test_number = len(self.TEST)
         self.vocabularySize = len(self.word2id)
 
