@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-import re
-
 import cPickle
 import numpy as np
+import re
+import threading
+
 import theano
 import theano.tensor as T
-import threading
 
 dtype = theano.config.floatX
 rng = np.random.RandomState(2016)
@@ -41,6 +41,8 @@ def clean_word(word):
         word = word.replace(r"'s", "")
         word = word.replace(r"?", "")
         return word
+
+
 def clean_str_remove(string):
     """
     Tokenization/string cleaning
@@ -121,6 +123,12 @@ def padding(sequence, pads=0, max_len=None, dtype='int32', return_matrix=False):
                                dtype=dtype)
         return x, v_matrix
     return x, np.asarray(v_length, dtype='int32')
+
+
+def pad_index2distribution(index, classes):
+    li = [0] * classes
+    li[index] = 1
+    return li
 
 
 class sort_utils(threading.Thread):
