@@ -6,7 +6,7 @@ from DataProcessor.QASentForServer import QASentForServerdataPreprocess
 from DataProcessor.WikiQA import WikiQAdataPreprocess
 from DataProcessor.insuranceQA import insuranceQAPreprocess
 from NeuralModel.IAGRU import IAGRU
-from NeuralModel.OAGRU import OAGRU
+from NeuralModel.OAGRU import OAGRU, OAGRU_small
 
 __author__ = 'benywon'
 
@@ -16,6 +16,7 @@ QASent = 'QASent'
 
 IAGru = 'IAGru'
 OAGru = 'OAGru'
+OAGru_SMALL = 'OAGru_small'
 
 
 class AnswerSelection:
@@ -31,11 +32,13 @@ class AnswerSelection:
             self.Data = QASentForServerdataPreprocess(**kwargs)
         if MODEL == IAGru:
             self.Model = IAGRU(data=self.Data, **kwargs)
+        elif MODEL == OAGru_SMALL:
+            self.Model = OAGRU_small(data=self.Data, **kwargs)
         else:
             self.Model = OAGRU(data=self.Data, **kwargs)
 
     def Train(self):
-        print 'start training ' + self.Data.dataset_name + '  '+self.Model.Model_name+'...'
+        print 'start training ' + self.Data.dataset_name + '  ' + self.Model.Model_name + '...'
         for epoch in xrange(self.Model.epochs):
             print 'start epoch:' + str(epoch)
             for i in xrange(self.Data.train_number):
