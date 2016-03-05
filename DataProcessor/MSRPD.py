@@ -22,11 +22,11 @@ class MSRPD(dataPreprocess):
     def __build_data_set__(self):
         print 'start loading data from original file'
         trainfilepath = self.path + 'msr_paraphrase_train.txt'
-        testfilepath = self.path + 'WikiQA-test.tsv'
-        devfilepath = self.path + 'WikiQA-dev.tsv'
+        testfilepath = self.path + 'msr_paraphrase_test.txt'
 
-        def get_one_set(filepath, train=True):
+        def get_one_set(filepath):
             print 'process:' + filepath
+            target = []
             with open(filepath, 'rb') as f:
                 lines = f.readlines()[1:-1]
                 q = []
@@ -34,16 +34,27 @@ class MSRPD(dataPreprocess):
                 no = []
                 for line in lines:
                     divs = line.split('\t')
-                    label = int(divs[0])
+                    label_index = int(divs[0])
+                    label = pad_index2distribution(label_index, 2)
                     sent1 = clean_str(divs[3])
                     sent2 = clean_str(divs[4])
                     sent1_ids = self.get_sentence_id_list(sent1, max_length=self.Max_length)
                     sent2_ids = self.get_sentence_id_list(sent2, max_length=self.Max_length)
                     q.append(sent1_ids)
                     yes.append(sent2_ids)
+                    no.append(label)
+            target.append([x for x in q])
+            target.append([x for x in yes])
+            target.append([x for x in no])
 
-        self.TRAIN = get_one_set(trainfilepath, train=True)
-        self.DEV = get_one_set(devfilepath, train=True)
-        self.TEST = get_one_set(testfilepath, train=False)
-        self.transfer_data()
+        self.TRAIN = get_one_set(trainfilepath)
+        self.TEST = get_one_set(testfilepath)
+        self.transfer_data(add_dev=False)
+        transfun_default = lambda z: np.asmatrix(z, dtype='int32') if self.batch_training else np.asarray(z,
+                                                                                                          dtype='int32')
+        self.TEST = [map(transfun_default, x) for x in self.TEST]
         print 'load data done'
+
+
+if __name__ == '__main__':
+    c = MSRPD(reload=True, batch_training=False)

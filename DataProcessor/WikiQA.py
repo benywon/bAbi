@@ -36,7 +36,7 @@ class WikiQAdataPreprocess(dataPreprocess):
         def get_one_set(filepath, sample=0, train=False):
             print 'process:' + filepath
             target = []
-            questionPair = {}
+            questionpair = {}
 
             def deal_one_line(line, add_vacabulary=True):
                 ts = line.split('\t')
@@ -46,22 +46,22 @@ class WikiQAdataPreprocess(dataPreprocess):
                 question = self.get_sentence_id_list(question_origin, add_vacabulary=add_vacabulary)
                 answer = self.get_sentence_id_list(answer_origin, add_vacabulary=add_vacabulary)
                 right = int(ts[6])
-                if not question_id in questionPair:
-                    questionPair[question_id] = list()
-                questionPair[question_id].append([question, answer, right])
+                if not question_id in questionpair:
+                    questionpair[question_id] = list()
+                questionpair[question_id].append([question, answer, right])
 
             with open(filepath, 'rb') as f:
                 lines = f.readlines()
             [deal_one_line(x) for x in lines[1:]]
-            at_least_one_right = [questionPair[x] for x in questionPair if sum([z[2] for z in questionPair[x]]) > 0]
+            at_least_one_right = [questionpair[x] for x in questionpair if sum([z[2] for z in questionpair[x]]) > 0]
 
             if not train:
                 return [[[self.transfun(x[0], 'int32'), self.transfun(x[1], 'int32'), x[2]] for x in t] for t
                         in at_least_one_right]
             else:
                 if sample > 0:
-                    without_right_answer = [[z[1] for z in questionPair[x]] for x in questionPair if
-                                            sum([z[2] for z in questionPair[x]]) == 0]
+                    without_right_answer = [[z[1] for z in questionpair[x]] for x in questionpair if
+                                            sum([z[2] for z in questionpair[x]]) == 0]
                 q = []
                 yes = []
                 no = []

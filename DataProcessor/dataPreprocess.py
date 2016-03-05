@@ -148,5 +148,6 @@ class dataPreprocess:
             self.build_word2vec()
         if add_dev:
             self.__transfer2numpy__(self.DEV, self.batch_training)
+
         self.__transfer2numpy__(self.TRAIN, self.batch_training)
         self.save_data()
