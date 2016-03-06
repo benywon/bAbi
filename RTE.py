@@ -42,9 +42,9 @@ class RTE(TaskBases):
             prediction = self.Model.test_function(question, answer_yes)
             true = self.Data.TEST[2][i]
             total += 1
-            b = ("Testing" + str(i) + " in total:" + str(length) + ' output: ' + str(prediction))
+            b = ("Testing:" + str(i) + " in total:" + str(length) + ' output: ' + str(prediction))
             sys.stdout.write('\r' + b)
-            if self.IsIndexMatch(prediction, true):
+            if self.IsIndexMatch(prediction, true, self.Data.batch_training):
                 right += 1
         precision = right / total
         print '\nPrecision is :\t' + str(precision)
@@ -60,7 +60,7 @@ class RTE(TaskBases):
 
 
 if __name__ == '__main__':
-    c = RTE(optmizer='adadelta', MODEL=IAGru, DATASET=SNLI_DATA, sample_weight=0.0001, batch_training=False, sampling=3,
+    c = RTE(optmizer='adadelta', MODEL=IAGru, DATASET=SNLI_DATA, sample_weight=0.2, batch_training=True, sampling=3,
             reload=False,
             Margin=0.15,
             N_out=3,

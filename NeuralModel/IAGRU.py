@@ -204,12 +204,21 @@ class IAGRU(ModelBase):
         all_params.extend(backward.get_parameter())
         all_params.append(attention_projection)
         if self.classfication:
-            Wout = theano.shared(sample_weights(4 * self.N_hidden, self.N_out), name='Wout')
-            representation = T.concatenate([question_representation, oa_yes], axis=1)
-            prediction = T.nnet.softmax(T.dot(representation, Wout))
-            loss = T.nnet.categorical_crossentropy(prediction, In_answer_wrong)
-            prediction_label = T.argmax(prediction, axis=1)
-            all_params.append(Wout)
+            if self.N_out > 2:
+                Wout = theano.shared(sample_weights(4 * self.N_hidden, self.N_out), name='Wout')
+                representation = T.concatenate([question_representation, oa_yes], axis=1)
+                prediction = T.nnet.softmax_graph(T.dot(representation, Wout))
+                loss = T.nnet.categorical_crossentropy(prediction, In_answer_wrong)
+                prediction_label = T.argmax(prediction, axis=1)
+                all_params.append(Wout)
+            else:  # we can also use cosine similarity and transfer it into distribution
+                Wout = theano.shared(sample_weights(4 * self.N_hidden, self.N_out), name='Wout')
+                representation = T.concatenate([question_representation, oa_yes], axis=1)
+                prediction = T.nnet.softmax_graph(T.dot(representation, Wout))
+                loss = T.nnet.categorical_crossentropy(prediction, In_answer_wrong)
+                prediction_label = T.argmax(prediction, axis=1)
+                all_params.append(Wout)
+            loss = T.mean(loss)
         else:
             predict_yes, _ = theano.scan(cosine, sequences=[oa_yes, question_representation])
             predict_no, _ = theano.scan(cosine, sequences=[oa_no, question_representation])

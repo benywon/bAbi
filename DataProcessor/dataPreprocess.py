@@ -110,7 +110,7 @@ class dataPreprocess:
         length = len(list_obj[0])
         length_tuple = [[len(list_obj[i][j]) for i in xrange(layer)] for j in xrange(length)]
         [length_tuple[m].append(m) for m in xrange(length)]
-        sorted_tuple = sorted(length_tuple, key=lambda x: [x[i] for i in xrange(layer)])
+        sorted_tuple = sorted(length_tuple, key=lambda x: [x[m] for m in xrange(layer)])
         sorted_list_tuple = []
         i = 1
         one_patch = [sorted_tuple[0][layer]]

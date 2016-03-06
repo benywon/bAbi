@@ -20,7 +20,6 @@ class SNLI(dataPreprocess):
             self.load_data()
         self.calc_data_stat()
         self.dataset_name = 'SNLI'
-        TRAIN = self.TRAIN
 
     def __build_data_set__(self):
         print 'start loading data from original file'
@@ -61,13 +60,22 @@ class SNLI(dataPreprocess):
         if len(self.TRAIN_TOTAL) == 0:
             self.TRAIN_TOTAL = self.TRAIN
         print 'sample snli data with weight:' + str(sample_weight)
-        length = len(self.TRAIN_TOTAL[0])
-        sample_length = int(np.ceil(length * sample_weight))
-        self.train_number = sample_length
-        arr = np.arange(length)
-        np.random.shuffle(arr)
-        t = arr[0:sample_length]
-        q1 = [self.TRAIN_TOTAL[0][i] for i in t]
-        q2 = [self.TRAIN_TOTAL[1][i] for i in t]
-        q3 = [self.TRAIN_TOTAL[2][i] for i in t]
-        self.TRAIN = [q1, q2, q3]
+        if self.batch_training:
+            length = len(self.TRAIN_TOTAL)
+            sample_length = int(np.ceil(length * sample_weight))
+            self.train_number = sample_length
+            arr = np.arange(length)
+            np.random.shuffle(arr)
+            t = arr[0:sample_length]
+            self.TRAIN = [self.TRAIN_TOTAL[i] for i in t]
+        else:
+            length = len(self.TRAIN_TOTAL[0])
+            sample_length = int(np.ceil(length * sample_weight))
+            self.train_number = sample_length
+            arr = np.arange(length)
+            np.random.shuffle(arr)
+            t = arr[0:sample_length]
+            q1 = [self.TRAIN_TOTAL[0][i] for i in t]
+            q2 = [self.TRAIN_TOTAL[1][i] for i in t]
+            q3 = [self.TRAIN_TOTAL[2][i] for i in t]
+            self.TRAIN = [q1, q2, q3]

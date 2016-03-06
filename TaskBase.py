@@ -38,8 +38,10 @@ class TaskBases:
 
         return wrapper
 
-    def IsIndexMatch(self, pre_arg, true_distribution):
+    def IsIndexMatch(self, pre_arg, true_distribution, batch_training=False):
         li = true_distribution.tolist()
+        if batch_training:
+            li = li[0]
         if li[pre_arg] == 1:
             return True
         return False
