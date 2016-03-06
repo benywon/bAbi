@@ -50,9 +50,9 @@ class ParaphraseDetection(TaskBases):
 
 if __name__ == '__main__':
     c = ParaphraseDetection(optmizer='adadelta', MODEL=IAGru, DATASET=MSR, batch_training=False, sampling=3,
-                            reload=True,
+                            reload=False,
                             Margin=0.15,
                             N_out=2,
                             use_the_last_hidden_variable=False, epochs=50, Max_length=50,
-                            N_hidden=150)
+                            N_hidden=80)
     c.Train()

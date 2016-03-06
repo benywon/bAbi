@@ -323,7 +323,7 @@ class OAGRU_small(ModelBase):
             if not self.attention:
                 Oa = T.mean(answer_lstm_matrix, axis=0)
             else:
-                weight_vector = T.dot(T.dot(answer_lstm_matrix, attention_projection), Oq)
+                weight_vector = T.nnet.softmax_graph(T.dot(T.dot(answer_lstm_matrix, attention_projection), Oq))
 
                 Oa = T.dot(weight_vector, answer_lstm_matrix)
 
