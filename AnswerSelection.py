@@ -42,7 +42,7 @@ class AnswerSelection(TaskBases):
         self.Model.save_model(append_name)
 
     def Test(self):
-        print 'start testing...'
+        print '\nstart testing...'
         final_result_MAP = []
         final_result_MRR = []
         for one_pack in self.Data.TEST:
@@ -70,7 +70,7 @@ class AnswerSelection(TaskBases):
 
 
 if __name__ == '__main__':
-    c = AnswerSelection(optmizer='adadelta', MODEL=IAGru, DATASET=WikiQA, batch_training=False, sampling=3,
+    c = AnswerSelection(optmizer='adadelta', MODEL=IAGru, DATASET=WikiQA, batch_training=False, sampling=5,
                         reload=False,
                         Margin=0.15,
                         use_the_last_hidden_variable=False, use_clean=True, epochs=50, Max_length=50,

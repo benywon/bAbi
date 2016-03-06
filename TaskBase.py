@@ -33,12 +33,15 @@ class TaskBases:
                             loss))
                     sys.stdout.write('\r' + b)
                 rst = function(self, *args, **kwargs)
-                return rst
+            return rst
 
         return wrapper
 
-    def IsIndexMatch(self, in_vector1, in_vector2):
-        return in_vector1.tolist() == in_vector2.tolist()
+    def IsIndexMatch(self, pre_arg, true_distribution):
+        li = true_distribution.tolist()
+        if li[pre_arg] == 1:
+            return True
+        return False
 
     def Test(self):
         raise Exception('You have not implement a test function')

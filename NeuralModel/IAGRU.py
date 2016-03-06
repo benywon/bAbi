@@ -102,12 +102,22 @@ class IAGRU(ModelBase):
         all_params.extend(backward.get_parameter())
         all_params.append(attention_projection)
         if self.classfication:
-            Wout = theano.shared(sample_weights(4 * self.N_hidden, self.N_out), name='Wout')
-            representation = T.concatenate([question_representation, oa_yes], axis=0)
-            prediction = T.nnet.softmax_graph(T.dot(representation, Wout))
-            loss = T.nnet.categorical_crossentropy(prediction, In_answer_wrong)
-            prediction_label = T.argmax(prediction)
-            all_params.append(Wout)
+            if self.N_out > 2:
+                Wout = theano.shared(sample_weights(4 * self.N_hidden, self.N_out), name='Wout')
+                representation = T.concatenate([question_representation, oa_yes], axis=0)
+                prediction = T.nnet.softmax_graph(T.dot(representation, Wout))
+                loss = T.nnet.categorical_crossentropy(prediction, In_answer_wrong)
+                prediction_label = T.argmax(prediction)
+                all_params.append(Wout)
+            else:
+                Wout = theano.shared(sample_weights(4 * self.N_hidden, self.N_out), name='Wout')
+                representation = T.concatenate([question_representation, oa_yes], axis=0)
+                prediction = T.nnet.softmax_graph(T.dot(representation, Wout))
+                loss = T.nnet.categorical_crossentropy(prediction, In_answer_wrong)
+                prediction_label = T.argmax(prediction)
+                all_params.append(Wout)
+
+
         else:
             predict_yes = cosine(oa_yes, question_representation)
             predict_no = cosine(oa_no, question_representation)
@@ -208,7 +218,6 @@ class IAGRU(ModelBase):
             loss = T.mean(T.maximum(0, self.Margin - margin))
 
         self.parameter = all_params
-
 
         loss = self.add_l1_l2_norm(loss=loss)
         updates = self.get_update(loss=loss)

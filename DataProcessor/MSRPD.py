@@ -24,7 +24,7 @@ class MSRPD(dataPreprocess):
         trainfilepath = self.path + 'msr_paraphrase_train.txt'
         testfilepath = self.path + 'msr_paraphrase_test.txt'
 
-        def get_one_set(filepath):
+        def get_one_set(filepath, train=False):
             print 'process:' + filepath
             target = []
             with open(filepath, 'rb') as f:
@@ -43,17 +43,28 @@ class MSRPD(dataPreprocess):
                     q.append(sent1_ids)
                     yes.append(sent2_ids)
                     no.append(label)
-            target.append(q)
-            target.append(yes)
-            target.append(no)
+            if train:
+                q2 = q + yes
+                yes2 = yes + q
+                no2 = no * 2
+            else:
+                q2 = q
+                yes2 = yes
+                no2 = no
+            target.append(q2)
+            target.append(yes2)
+            target.append(no2)
             return target
 
-        self.TRAIN = get_one_set(trainfilepath)
+        self.TRAIN = get_one_set(trainfilepath, train=True)
         self.TEST = get_one_set(testfilepath)
-        self.transfer_data(add_dev=False)
+
         transfun_default = lambda z: np.asmatrix(z, dtype='int32') if self.batch_training else np.asarray(z,
                                                                                                           dtype='int32')
+
         self.TEST = [map(transfun_default, x) for x in self.TEST]
+        self.transfer_data(add_dev=False)
+
         print 'load data done'
 
 

@@ -25,7 +25,7 @@ class ParaphraseDetection(TaskBases):
             self.Model = OAGRU(data=self.Data, classfication=True, **kwargs)
 
     def Test(self):
-        print 'start testing...'
+        print '\nstart testing...'
         length = len(self.Data.TEST[0])
         total = 0.
         right = 0.
@@ -38,7 +38,7 @@ class ParaphraseDetection(TaskBases):
             if self.IsIndexMatch(prediction, true):
                 right += 1
         precision = right / total
-        print 'prediction is :\t' + str(precision)
+        print 'Precision is :\t' + str(precision)
         return precision
 
     @TaskBases.Train
@@ -50,7 +50,7 @@ class ParaphraseDetection(TaskBases):
 
 if __name__ == '__main__':
     c = ParaphraseDetection(optmizer='adadelta', MODEL=IAGru, DATASET=MSR, batch_training=False, sampling=3,
-                            reload=False,
+                            reload=True,
                             Margin=0.15,
                             N_out=2,
                             use_the_last_hidden_variable=False, epochs=50, Max_length=50,
