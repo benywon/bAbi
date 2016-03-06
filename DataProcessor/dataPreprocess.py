@@ -68,6 +68,11 @@ class dataPreprocess:
             else:
                 return 0
 
+    def transferTest(self):
+        transfun_default = lambda z: np.asmatrix(z, dtype='int32') if self.batch_training else np.asarray(z,
+                                                                                                          dtype='int32')
+        self.TEST = [map(transfun_default, x) for x in self.TEST]
+
     def build_word2vec(self):
         self.vocabularySize = len(self.word2id)
         assert len(self.word2id) > 0, 'you have not load word2id!!'

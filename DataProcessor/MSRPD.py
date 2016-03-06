@@ -58,11 +58,7 @@ class MSRPD(dataPreprocess):
 
         self.TRAIN = get_one_set(trainfilepath, train=True)
         self.TEST = get_one_set(testfilepath)
-
-        transfun_default = lambda z: np.asmatrix(z, dtype='int32') if self.batch_training else np.asarray(z,
-                                                                                                          dtype='int32')
-
-        self.TEST = [map(transfun_default, x) for x in self.TEST]
+        self.transferTest()
         self.transfer_data(add_dev=False)
 
         print 'load data done'

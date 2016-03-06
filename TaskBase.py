@@ -32,6 +32,7 @@ class TaskBases:
                             self.Data.train_number) + batch_length + ' loss: ' + str(
                             loss))
                     sys.stdout.write('\r' + b)
+                print ''
                 rst = function(self, *args, **kwargs)
             return rst
 

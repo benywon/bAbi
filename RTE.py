@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import sys
+
 from DataProcessor.SNLI import SNLI
 
 __author__ = 'benywon'
@@ -40,10 +42,12 @@ class RTE(TaskBases):
             prediction = self.Model.test_function(question, answer_yes)
             true = self.Data.TEST[2][i]
             total += 1
+            b = ("Testing" + str(i) + " in total:" + str(length) + ' output: ' + str(prediction))
+            sys.stdout.write('\r' + b)
             if self.IsIndexMatch(prediction, true):
                 right += 1
         precision = right / total
-        print 'Precision is :\t' + str(precision)
+        print '\nPrecision is :\t' + str(precision)
         return precision
 
     @TaskBases.Train
@@ -56,10 +60,10 @@ class RTE(TaskBases):
 
 
 if __name__ == '__main__':
-    c = RTE(optmizer='adadelta', MODEL=IAGru, DATASET=SNLI_DATA, sample_weight=0.05, batch_training=False, sampling=3,
+    c = RTE(optmizer='adadelta', MODEL=IAGru, DATASET=SNLI_DATA, sample_weight=0.0001, batch_training=False, sampling=3,
             reload=False,
             Margin=0.15,
-            N_out=2,
+            N_out=3,
             use_the_last_hidden_variable=False, epochs=150, Max_length=50,
             N_hidden=150)
     c.Train()

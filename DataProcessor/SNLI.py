@@ -53,6 +53,7 @@ class SNLI(dataPreprocess):
         self.TRAIN = get_one_set(trainfilepath)
         self.TEST = get_one_set(testfilepath)
         self.DEV = get_one_set(devfilepath)
+        self.transferTest()
         self.transfer_data()
         print 'load data done'
 
@@ -62,6 +63,7 @@ class SNLI(dataPreprocess):
         print 'sample snli data with weight:' + str(sample_weight)
         length = len(self.TRAIN_TOTAL[0])
         sample_length = int(np.ceil(length * sample_weight))
+        self.train_number = sample_length
         arr = np.arange(length)
         np.random.shuffle(arr)
         t = arr[0:sample_length]
