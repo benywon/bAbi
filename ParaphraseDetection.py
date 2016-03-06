@@ -54,5 +54,5 @@ if __name__ == '__main__':
                             Margin=0.15,
                             N_out=2,
                             use_the_last_hidden_variable=False, epochs=50, Max_length=50,
-                            N_hidden=80)
+                            N_hidden=50)
     c.Train()

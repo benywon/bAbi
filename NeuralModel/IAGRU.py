@@ -109,7 +109,7 @@ class IAGRU(ModelBase):
                 loss = T.nnet.categorical_crossentropy(prediction, In_answer_wrong)
                 prediction_label = T.argmax(prediction)
                 all_params.append(Wout)
-            else:
+            else:  # we can also use cosine similarity and transfer it into distribution
                 Wout = theano.shared(sample_weights(4 * self.N_hidden, self.N_out), name='Wout')
                 representation = T.concatenate([question_representation, oa_yes], axis=0)
                 prediction = T.nnet.softmax_graph(T.dot(representation, Wout))
