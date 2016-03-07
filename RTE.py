@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import sys
 
+from DataProcessor.SICK import SICK
 from DataProcessor.SNLI import SNLI
 
 __author__ = 'benywon'
@@ -12,18 +13,22 @@ from TaskBase import TaskBases
 __author__ = 'benywon'
 
 SNLI_DATA = 'SNLI'
+SICK_DATA = 'SICK'
 
 
 class RTE(TaskBases):
     def __init__(self, MODEL=IAGru, DATASET=SNLI_DATA, **kwargs):
         TaskBases.__init__(self)
+        if kwargs['sample_weight'] is not None:
+                self.sample_weight = kwargs['sample_weight']
+        else:
+                self.sample_weight = 0.
         if DATASET == SNLI_DATA:
             self.Data = SNLI(**kwargs)
-            if kwargs['sample_weight'] is not None:
-                self.sample_weight = kwargs['sample_weight']
-                self.Data.sample_data(kwargs['sample_weight'])
-            else:
-                self.sample_weight = 0.
+            if self.sample_weight>0:
+                self.Data.sample_data(self.sample_weight)
+        elif DATASET == SICK_DATA:
+            self.Data = SICK(**kwargs)
         if MODEL == IAGru:
             self.Model = IAGRU(data=self.Data, classfication=True, **kwargs)
         elif MODEL == OAGru_SMALL:
@@ -60,11 +65,11 @@ class RTE(TaskBases):
 
 
 if __name__ == '__main__':
-    c = RTE(optmizer='sgd', MODEL=IAGru, DATASET=SNLI_DATA, sample_weight=0.2, batch_training=True, sampling=3,
-            RNN_MODE='LSTM',
+    c = RTE(optmizer='adadelta', MODEL=IAGru, DATASET=SICK_DATA, sample_weight=0.0, batch_training=False, sampling=3,
+            RNN_MODE='GRU',
             reload=False,
             Margin=0.15,
             N_out=3,
             use_the_last_hidden_variable=False, epochs=150, Max_length=50,
-            N_hidden=150)
+            N_hidden=100)
     c.Train()
