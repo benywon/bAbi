@@ -60,7 +60,8 @@ class RTE(TaskBases):
 
 
 if __name__ == '__main__':
-    c = RTE(optmizer='adadelta', MODEL=IAGru, DATASET=SNLI_DATA, sample_weight=0.5, batch_training=True, sampling=3,
+    c = RTE(optmizer='sgd', MODEL=IAGru, DATASET=SNLI_DATA, sample_weight=0.2, batch_training=True, sampling=3,
+            RNN_MODE='LSTM',
             reload=False,
             Margin=0.15,
             N_out=3,
