@@ -36,7 +36,7 @@ class SNLI(dataPreprocess):
                 no = []
                 for line in f:
                     txts = line.split('\t')
-                    label_str = txts[0]
+                    label_str = clean_str(txts[4])
                     premise = self.get_sentence_id_list(txts[5], max_length=self.Max_length)
                     hypothesis = self.get_sentence_id_list(txts[6], max_length=self.Max_length)
                     label_index = 0 if label_str == 'entailment' else 1 if label_str == 'neutral' else 2

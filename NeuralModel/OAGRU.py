@@ -38,7 +38,7 @@ class OAGRU(ModelBase):
         print 'negative sample size:\t' + str(self.sampling)
         print 'RNN mode:\t' + self.RNN_MODE
 
-    def build_model_sample(self):
+    def build_model_sample(self, output_softmax=False):
         """
         if you are in classfication mode
         In_quesiotion is the premise or the first sentence
@@ -95,15 +95,15 @@ class OAGRU(ModelBase):
                 Saq = T.nnet.softmax(T.dot(Saq_before_softmax, Wms))
                 Oa = T.dot(T.flatten(Saq), answer_lstm_matrix)
 
-            return Oa
+            return Oa, Saq
 
-        oa_yes = get_final_result(answer_yes_lstm_matrix)
-        oa_no = get_final_result(answer_no_lstm_matrix)
+        oa_yes, saq_yes = get_final_result(answer_yes_lstm_matrix)
+        oa_no, saq_no = get_final_result(answer_no_lstm_matrix)
 
         all_params = forward.get_parameter()
         all_params.extend(backward.get_parameter())
 
-        if self.classfication:
+        if self.classification:
             Wout = theano.shared(sample_weights(4 * self.N_hidden, self.N_out), name='Wout')
             representation = T.concatenate(Oq, oa_yes)
             prediction = T.dot(representation, Wout)
@@ -131,7 +131,10 @@ class OAGRU(ModelBase):
                                 outputs=loss,
                                 updates=updates,
                                 allow_input_downcast=True)
-        test = theano.function([In_quesiotion, In_answer_right], outputs=predict_yes, on_unused_input='ignore')
+        if output_softmax:
+            test = theano.function([In_quesiotion, In_answer_right], outputs=saq_yes, on_unused_input='ignore')
+        else:
+            test = theano.function([In_quesiotion, In_answer_right], outputs=predict_yes, on_unused_input='ignore')
         print 'build model done!'
         return train, test
 
@@ -200,7 +203,7 @@ class OAGRU(ModelBase):
         all_params = forward.get_parameter()
         all_params.extend(backward.get_parameter())
 
-        if self.classfication:
+        if self.classification:
             Wout = theano.shared(sample_weights(4 * self.N_hidden, self.N_out), name='Wout')
             representation = T.concatenate(question_representations, oa_yes)
             prediction = T.dot(representation, Wout)
@@ -231,7 +234,7 @@ class OAGRU(ModelBase):
                                 allow_input_downcast=True)
 
         test = theano.function([In_quesiotion, In_answer_right],
-                               outputs=prediction[0] if self.classfication else predict_yes[0],
+                               outputs=prediction[0] if self.classification else predict_yes[0],
                                on_unused_input='ignore',
                                allow_input_downcast=True)
         print 'build model done!'
@@ -335,7 +338,7 @@ class OAGRU_small(ModelBase):
         all_params = forward.get_parameter()
         all_params.extend(backward.get_parameter())
 
-        if self.classfication:
+        if self.classification:
             Wout = theano.shared(sample_weights(4 * self.N_hidden, self.N_out), name='Wout')
             representation = T.concatenate(Oq, oa_yes)
             prediction = T.dot(representation, Wout)
@@ -433,7 +436,7 @@ class OAGRU_small(ModelBase):
         all_params = forward.get_parameter()
         all_params.extend(backward.get_parameter())
 
-        if self.classfication:
+        if self.classification:
             Wout = theano.shared(sample_weights(4 * self.N_hidden, self.N_out), name='Wout')
             representation = T.concatenate(question_representations, oa_yes)
             prediction = T.dot(representation, Wout)
@@ -464,7 +467,7 @@ class OAGRU_small(ModelBase):
                                 allow_input_downcast=True)
 
         test = theano.function([In_quesiotion, In_answer_right],
-                               outputs=prediction[0] if self.classfication else predict_yes[0],
+                               outputs=prediction[0] if self.classification else predict_yes[0],
                                on_unused_input='ignore',
                                allow_input_downcast=True)
         print 'build model done!'

@@ -34,10 +34,10 @@ class SICK(dataPreprocess):
                 no = []
                 for line in f:
                     txts = line.split('\t')
-                    label_str = txts[4]
+                    label_str = clean_str(txts[4])
                     premise = self.get_sentence_id_list(txts[1], max_length=self.Max_length)
                     hypothesis = self.get_sentence_id_list(txts[2], max_length=self.Max_length)
-                    label_index = 0 if label_str == 'ENTAILMENT' else 1 if label_str == 'NEUTRAL' else 2
+                    label_index = 0 if label_str == 'entailment' else 1 if label_str == 'neutral' else 2
                     label = pad_index2distribution(label_index, 3)
                     q.append(premise)
                     yes.append(hypothesis)

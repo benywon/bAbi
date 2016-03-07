@@ -68,11 +68,21 @@ class AnswerSelection(TaskBases):
         print 'final-result-MRR:' + str(MRR)
         return MAP, MRR
 
+    def output_softmax(self):
+        print 'start output softmax'
+        if self.Model.batch_training:
+            self.Model.batch_training = False
+            self.Model.build_model()
+        else:
+            self.Model.load_model(
+                self.Model.model_file_base_path + '03-05-04:50:05WikiQA_MAP_0.660487157459_MRR+0.672035389165.pickle')
+
 
 if __name__ == '__main__':
-    c = AnswerSelection(optmizer='adadelta', MODEL=OAGru_SMALL, DATASET=WikiQA, batch_training=False, sampling=5,
+    c = AnswerSelection(optmizer='adadelta', MODEL=OAGru, DATASET=WikiQA, batch_training=False, sampling=5,
                         reload=False,
+                        output_softmax=True,
                         Margin=0.15,
                         use_the_last_hidden_variable=False, use_clean=True, epochs=50, Max_length=50,
                         N_hidden=150)
-    c.Train()
+    c.output_softmax()

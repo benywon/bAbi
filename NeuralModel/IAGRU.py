@@ -101,7 +101,7 @@ class IAGRU(ModelBase):
         all_params = forward.get_parameter()
         all_params.extend(backward.get_parameter())
         all_params.append(attention_projection)
-        if self.classfication:
+        if self.classification:
             if self.N_out > 2:
                 Wout = theano.shared(sample_weights(4 * self.N_hidden, self.N_out), name='Wout')
                 representation = T.concatenate([question_representation, oa_yes], axis=0)
@@ -139,7 +139,7 @@ class IAGRU(ModelBase):
                                 updates=updates,
                                 allow_input_downcast=True)
         test = theano.function([In_quesiotion, In_answer_right],
-                               outputs=prediction_label if self.classfication else predict_yes,
+                               outputs=prediction_label if self.classification else predict_yes,
                                on_unused_input='ignore')
         print 'build model done!'
         return train, test
@@ -203,7 +203,7 @@ class IAGRU(ModelBase):
         all_params = forward.get_parameter()
         all_params.extend(backward.get_parameter())
         all_params.append(attention_projection)
-        if self.classfication:
+        if self.classification:
             if self.N_out > 2:
                 Wout = theano.shared(sample_weights(4 * self.N_hidden, self.N_out), name='Wout')
                 representation = T.concatenate([question_representation, oa_yes], axis=1)
@@ -237,7 +237,7 @@ class IAGRU(ModelBase):
                                 allow_input_downcast=True)
 
         test = theano.function([In_quesiotion, In_answer_right],
-                               outputs=prediction_label[0] if self.classfication else predict_yes[0],
+                               outputs=prediction_label[0] if self.classification else predict_yes[0],
                                on_unused_input='ignore',
                                allow_input_downcast=True)
         print 'build model done!'

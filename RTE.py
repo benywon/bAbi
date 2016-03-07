@@ -20,12 +20,12 @@ class RTE(TaskBases):
     def __init__(self, MODEL=IAGru, DATASET=SNLI_DATA, **kwargs):
         TaskBases.__init__(self)
         if kwargs['sample_weight'] is not None:
-                self.sample_weight = kwargs['sample_weight']
+            self.sample_weight = kwargs['sample_weight']
         else:
-                self.sample_weight = 0.
+            self.sample_weight = 0.
         if DATASET == SNLI_DATA:
             self.Data = SNLI(**kwargs)
-            if self.sample_weight>0:
+            if self.sample_weight > 0:
                 self.Data.sample_data(self.sample_weight)
         elif DATASET == SICK_DATA:
             self.Data = SICK(**kwargs)
@@ -70,6 +70,6 @@ if __name__ == '__main__':
             reload=False,
             Margin=0.15,
             N_out=3,
-            use_the_last_hidden_variable=False, epochs=150, Max_length=50,
-            N_hidden=100)
+            use_the_last_hidden_variable=False, epochs=150, Max_length=80,
+            N_hidden=170)
     c.Train()

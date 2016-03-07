@@ -16,9 +16,13 @@ class ModelBase():
 
     def __init__(self, data, classfication=False, N_hidden=100, optmizer='sgd', batch_training=False, sampling=0,
                  Train_embedding=False,
+                 output_softmax=False,
                  learning_rate=0.01, l1=0.00001, l2=0.00001, epochs=50, **kwargs):
-        self.classfication = classfication
+        self.output_softmax = output_softmax
+        self.classification = classfication
         self.batch_training = batch_training
+        if self.output_softmax:
+            self.batch_training = False
         self.Train_embedding = Train_embedding
         self.sampling = sampling
         self.epochs = epochs
@@ -59,7 +63,7 @@ class ModelBase():
 
         return wrapper
 
-    def build_model(self):
+    def build_model(self, output_softmax=False):
         """
         should be re-implement by child class
         if you are in classfication mode
@@ -71,12 +75,12 @@ class ModelBase():
         if self.batch_training:
             self.train_function, self.test_function = self.build_model_batch()
         else:
-            self.train_function, self.test_function = self.build_model_sample()
+            self.train_function, self.test_function = self.build_model_sample(output_softmax)
 
     def build_model_batch(self):
         pass
 
-    def build_model_sample(self):
+    def build_model_sample(self, output_softmax):
         pass
 
     def save_model(self, append=None):
