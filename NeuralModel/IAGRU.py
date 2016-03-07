@@ -40,13 +40,13 @@ class IAGRU(ModelBase):
         print 'negative sample size:\t' + str(self.sampling)
         print 'RNN mode:\t' + self.RNN_MODE
 
-    def build_model_sample(self, only_for_test=False):
+    def build_model_sample(self, output_softmax, only_for_test=False):
         print 'start building model IAGRU sample...'
-        In_quesiotion = T.ivector('in_question')
+        In_question = T.ivector('in_question')
         In_answer_right = T.ivector('in_answer_right')
         In_answer_wrong = T.ivector('in_answer_wrong')
         EmbeddingMatrix = theano.shared(np.asanyarray(self.wordEmbedding, dtype='float64'), name='WordEmbedding', )
-        in_question_embedding = EmbeddingMatrix[In_quesiotion]
+        in_question_embedding = EmbeddingMatrix[In_question]
         in_answer_right_embedding = EmbeddingMatrix[In_answer_right]
         in_answer_wrong_embedding = EmbeddingMatrix[In_answer_wrong]
         # this is the shared function
@@ -73,8 +73,9 @@ class IAGRU(ModelBase):
 
         def trans_representationfromquestion(In_embedding, question):
             sigmoid = sigmoids(T.dot(T.dot(In_embedding, attention_projection), question))
+            softmax = T.nnet.softmax_graph(T.dot(T.dot(In_embedding, attention_projection), question))
             transMatrix = In_embedding.T * sigmoid
-            return get_gru_representation(transMatrix.T)
+            return get_gru_representation(transMatrix.T), softmax
 
         def get_output(In_matrix):
             if self.use_the_last_hidden_variable:
@@ -92,8 +93,9 @@ class IAGRU(ModelBase):
 
         question_representation = get_output(question_lstm_matrix)
 
-        answer_yes_lstm_matrix = trans_representationfromquestion(in_answer_right_embedding, question_representation)
-        answer_no_lstm_matrix = trans_representationfromquestion(in_answer_wrong_embedding, question_representation)
+        answer_yes_lstm_matrix, softmax = trans_representationfromquestion(in_answer_right_embedding,
+                                                                           question_representation)
+        answer_no_lstm_matrix, _ = trans_representationfromquestion(in_answer_wrong_embedding, question_representation)
 
         oa_yes = get_output(answer_yes_lstm_matrix)
         oa_no = get_output(answer_no_lstm_matrix)
@@ -134,13 +136,16 @@ class IAGRU(ModelBase):
 
         print 'start compile function...'
 
-        train = theano.function([In_quesiotion, In_answer_right, In_answer_wrong],
+        train = theano.function([In_question, In_answer_right, In_answer_wrong],
                                 outputs=loss,
                                 updates=updates,
                                 allow_input_downcast=True)
-        test = theano.function([In_quesiotion, In_answer_right],
-                               outputs=prediction_label if self.classification else predict_yes,
-                               on_unused_input='ignore')
+        if output_softmax:
+            test = theano.function([In_question, In_answer_right], outputs=softmax, on_unused_input='ignore',
+                                   allow_input_downcast=True)
+        else:
+            test = theano.function([In_question, In_answer_right], outputs=predict_yes, on_unused_input='ignore',
+                                   allow_input_downcast=True)
         print 'build model done!'
         return train, test
 

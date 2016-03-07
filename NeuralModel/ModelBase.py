@@ -22,7 +22,7 @@ class ModelBase():
         self.classification = classfication
         self.batch_training = batch_training
         if self.output_softmax:
-            self.batch_training = False
+            assert self.output_softmax != self.batch_training, '!!!!!!please use sample training!!!!!!'
         self.Train_embedding = Train_embedding
         self.sampling = sampling
         self.epochs = epochs
@@ -63,7 +63,7 @@ class ModelBase():
 
         return wrapper
 
-    def build_model(self, output_softmax=False):
+    def build_model(self):
         """
         should be re-implement by child class
         if you are in classfication mode
@@ -75,7 +75,7 @@ class ModelBase():
         if self.batch_training:
             self.train_function, self.test_function = self.build_model_batch()
         else:
-            self.train_function, self.test_function = self.build_model_sample(output_softmax)
+            self.train_function, self.test_function = self.build_model_sample(self.output_softmax)
 
     def build_model_batch(self):
         pass

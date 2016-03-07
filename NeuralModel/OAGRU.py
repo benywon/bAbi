@@ -38,20 +38,20 @@ class OAGRU(ModelBase):
         print 'negative sample size:\t' + str(self.sampling)
         print 'RNN mode:\t' + self.RNN_MODE
 
-    def build_model_sample(self, output_softmax=False):
+    def build_model_sample_beta(self, output_softmax=False):
         """
         if you are in classfication mode
-        In_quesiotion is the premise or the first sentence
+        In_question is the premise or the first sentence
         In_answer_right is the hypothesis or second sentence
         In_answer_wrong should be the true distribution
         :return:
         """
         print 'start building model OAGRU sample...'
-        In_quesiotion = T.ivector('in_question')
+        In_question = T.ivector('in_question')
         In_answer_right = T.ivector('in_answer_right')
         In_answer_wrong = T.ivector('in_answer_wrong')
         EmbeddingMatrix = theano.shared(np.asanyarray(self.wordEmbedding, dtype='float64'), name='WordEmbedding', )
-        in_question_embedding = EmbeddingMatrix[In_quesiotion]
+        in_question_embedding = EmbeddingMatrix[In_question]
         in_answer_right_embedding = EmbeddingMatrix[In_answer_right]
         in_answer_wrong_embedding = EmbeddingMatrix[In_answer_wrong]
         # this is the shared function
@@ -122,19 +122,118 @@ class OAGRU(ModelBase):
         if self.Train_embedding:
             all_params.append(EmbeddingMatrix)
         self.parameter = all_params
-
         loss = self.add_l1_l2_norm(loss=loss)
         updates = self.get_update(loss=loss)
         print 'compiling functions'
-
-        train = theano.function([In_quesiotion, In_answer_right, In_answer_wrong],
-                                outputs=loss,
-                                updates=updates,
-                                allow_input_downcast=True)
-        if output_softmax:
-            test = theano.function([In_quesiotion, In_answer_right], outputs=saq_yes, on_unused_input='ignore')
+        if not output_softmax:
+            train = theano.function([In_question, In_answer_right, In_answer_wrong],
+                                    outputs=loss,
+                                    updates=updates,
+                                    allow_input_downcast=True)
         else:
-            test = theano.function([In_quesiotion, In_answer_right], outputs=predict_yes, on_unused_input='ignore')
+            train = None
+        if output_softmax:
+            test = theano.function([In_question, In_answer_right], outputs=saq_yes, on_unused_input='ignore',
+                                   allow_input_downcast=True)
+        else:
+            test = theano.function([In_question, In_answer_right], outputs=predict_yes, on_unused_input='ignore',
+                                   allow_input_downcast=True)
+        print 'build model done!'
+        return train, test
+    def build_model_sample(self, output_softmax=False):
+        """
+        if you are in classfication mode
+        In_question is the premise or the first sentence
+        In_answer_right is the hypothesis or second sentence
+        In_answer_wrong should be the true distribution
+        :return:
+        """
+        print 'start building model OAGRU sample...'
+        In_question = T.ivector('in_question')
+        In_answer_right = T.ivector('in_answer_right')
+        In_answer_wrong = T.ivector('in_answer_wrong')
+        EmbeddingMatrix = theano.shared(np.asanyarray(self.wordEmbedding, dtype='float64'), name='WordEmbedding', )
+        in_question_embedding = EmbeddingMatrix[In_question]
+        in_answer_right_embedding = EmbeddingMatrix[In_answer_right]
+        in_answer_wrong_embedding = EmbeddingMatrix[In_answer_wrong]
+        # this is the shared function
+
+        if self.RNN_MODE == 'GRU':
+            forward = GRU(N_hidden=self.N_hidden, N_in=self.EmbeddingSize)
+        elif self.RNN_MODE == 'LSTM':
+            forward = LSTM(N_hidden=self.N_hidden, N_in=self.EmbeddingSize)
+        else:
+            forward = RNN(N_hidden=self.N_hidden, N_in=self.EmbeddingSize)
+
+        def get_lstm_representation(In_embedding):
+            forward.build(In_embedding)
+            lstm_forward = forward.get_hidden()
+            return lstm_forward
+
+        question_lstm_matrix = get_lstm_representation(in_question_embedding)
+        answer_yes_lstm_matrix = get_lstm_representation(in_answer_right_embedding)
+        answer_no_lstm_matrix = get_lstm_representation(in_answer_wrong_embedding)
+        if self.max_ave_pooling == 'ave':
+            Oq = T.mean(question_lstm_matrix, axis=0)
+        else:
+            Oq = T.max(question_lstm_matrix, axis=0)
+        Wam = theano.shared(sample_weights(self.N_hidden, self.N_hidden), name='Wam')
+        Wms = theano.shared(rng.uniform(-0.3, 0.3, size=self.N_hidden), name='Wms')
+        Wqm = theano.shared(sample_weights(self.N_hidden, self.N_hidden), name='Wqm')
+
+        def get_final_result(answer_lstm_matrix):
+            if not self.attention:
+                Oa = T.mean(answer_lstm_matrix, axis=0)
+            else:
+                WqmOq = T.dot(Wqm, Oq)
+
+                Saq_before_softmax = T.nnet.sigmoid(T.dot(answer_lstm_matrix, Wam) + WqmOq)
+
+                Saq = T.nnet.softmax(T.dot(Saq_before_softmax, Wms))
+                Oa = T.dot(T.flatten(Saq), answer_lstm_matrix)
+
+            return Oa, Saq
+
+        oa_yes, saq_yes = get_final_result(answer_yes_lstm_matrix)
+        oa_no, saq_no = get_final_result(answer_no_lstm_matrix)
+
+        all_params = forward.get_parameter()
+
+        if self.classification:
+            Wout = theano.shared(sample_weights(2 * self.N_hidden, self.N_out), name='Wout')
+            representation = T.concatenate(Oq, oa_yes)
+            prediction = T.dot(representation, Wout)
+            loss = T.nnet.categorical_crossentropy(prediction, In_answer_wrong)
+            all_params.append(Wout)
+        else:
+            predict_yes = cosine(oa_yes, Oq)
+            predict_no = cosine(oa_no, Oq)
+
+            margin = predict_yes - predict_no
+            loss = T.maximum(0, self.Margin - margin)
+        our_parameter = [Wam, Wms, Wqm]
+        if self.attention:
+            all_params.extend(our_parameter)
+
+        if self.Train_embedding:
+            all_params.append(EmbeddingMatrix)
+        self.parameter = all_params
+        loss = self.add_l1_l2_norm(loss=loss)
+        updates = self.get_update(loss=loss)
+        print 'compiling functions'
+        if not output_softmax:
+            train = theano.function([In_question, In_answer_right, In_answer_wrong],
+                                    outputs=loss,
+                                    updates=updates,
+                                    allow_input_downcast=True)
+        else:
+            train = None
+        if output_softmax:
+            test = theano.function([In_question, In_answer_right], outputs=saq_yes, on_unused_input='ignore',
+                                   allow_input_downcast=True)
+        else:
+            test = theano.function([In_question, In_answer_right], outputs=predict_yes, on_unused_input='ignore',
+                                   allow_input_downcast=True)
         print 'build model done!'
         return train, test
 
@@ -372,7 +471,7 @@ class OAGRU_small(ModelBase):
         return train, test
 
     def build_model_batch(self):
-        print 'start building model OAGRU batch...'
+        print 'start building model OAGRU batch without backward representation...'
         In_quesiotion = T.imatrix('in_question')
         In_answer_right = T.imatrix('in_answer_right')
         In_answer_wrong = T.imatrix('in_answer_wrong')

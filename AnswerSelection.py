@@ -7,6 +7,7 @@ from DataProcessor.insuranceQA import insuranceQAPreprocess
 from NeuralModel.IAGRU import IAGRU
 from NeuralModel.OAGRU import OAGRU, OAGRU_small
 from TaskBase import TaskBases
+from public_functions import dump_file
 
 __author__ = 'benywon'
 
@@ -70,18 +71,33 @@ class AnswerSelection(TaskBases):
 
     def output_softmax(self):
         print 'start output softmax'
-        if self.Model.batch_training:
-            self.Model.batch_training = False
-            self.Model.build_model()
-        else:
-            self.Model.load_model(
-                self.Model.model_file_base_path + '03-05-04:50:05WikiQA_MAP_0.660487157459_MRR+0.672035389165.pickle')
+        self.Model.load_model(
+            self.Model.model_file_base_path + '03-07-21:11:16WikiQA_MAP_0.555602986025_MRR_0.56631592573.pickle')
+        length = len(self.Data.TRAIN[0])
+        pool_list = list()
+        tran = lambda x: '_'.join(map(str, x.tolist()))
+        softmax_pool = []
+        for i in xrange(length):
+            question = self.Data.TRAIN[0][i]
+            pool_list.append(tran(question))
+            samples = []
+            answer_yes = self.Data.TRAIN[1][i]
+            answer_no = self.Data.TRAIN[2][i]
+            if tran(answer_yes) not in pool_list:
+                samples.append(answer_yes)
+            if tran(answer_no) not in pool_list:
+                samples.append(answer_no)
+            for sample in samples:
+                pool_list.append(tran(sample))
+                softmax = self.Model.test_function(question, sample)
+                softmax_pool.append(softmax)
+        dump_file(obj=softmax_pool, filepath='softmax_result555.pickle')
 
 
 if __name__ == '__main__':
-    c = AnswerSelection(optmizer='adadelta', MODEL=OAGru, DATASET=WikiQA, batch_training=False, sampling=5,
+    c = AnswerSelection(optmizer='adadelta', MODEL=OAGru, DATASET=WikiQA, batch_training=False, sampling=3,
                         reload=False,
-                        output_softmax=True,
+                        output_softmax=False,
                         Margin=0.15,
                         use_the_last_hidden_variable=False, use_clean=True, epochs=50, Max_length=50,
                         N_hidden=150)
