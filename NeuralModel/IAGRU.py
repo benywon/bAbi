@@ -105,8 +105,10 @@ class IAGRU(ModelBase):
         all_params.append(attention_projection)
         if self.classification:
             if self.N_out > 2:
-                Wout = theano.shared(sample_weights(4 * self.N_hidden, self.N_out), name='Wout')
-                representation = T.concatenate([question_representation, oa_yes], axis=0)
+                W1 = theano.shared(sample_weights(2 * self.N_hidden, 2 * self.N_hidden), name='w1')
+                W2 = theano.shared(sample_weights(2 * self.N_hidden, 2 * self.N_hidden), name='w2')
+                representation = T.tanh(T.dot(question_representation, W1) + T.dot(oa_yes, W2))
+                Wout = theano.shared(sample_weights(2 * self.N_hidden, self.N_out), name='Wout')
                 prediction = T.nnet.softmax_graph(T.dot(representation, Wout))
                 loss = T.nnet.categorical_crossentropy(prediction, In_answer_wrong)
                 prediction_label = T.argmax(prediction)
@@ -210,12 +212,16 @@ class IAGRU(ModelBase):
         all_params.append(attention_projection)
         if self.classification:
             if self.N_out > 2:
-                Wout = theano.shared(sample_weights(4 * self.N_hidden, self.N_out), name='Wout')
-                representation = T.concatenate([question_representation, oa_yes], axis=1)
+                W1 = theano.shared(sample_weights(2 * self.N_hidden, 2 * self.N_hidden), name='w1')
+                W2 = theano.shared(sample_weights(2 * self.N_hidden, 2 * self.N_hidden), name='w2')
+                representation = T.tanh(T.dot(question_representation, W1) + T.dot(oa_yes, W2))
+                Wout = theano.shared(sample_weights(2 * self.N_hidden, self.N_out), name='Wout')
                 prediction = T.nnet.softmax_graph(T.dot(representation, Wout))
                 loss = T.nnet.categorical_crossentropy(prediction, In_answer_wrong)
                 prediction_label = T.argmax(prediction, axis=1)
                 all_params.append(Wout)
+                all_params.append(W1)
+                all_params.append(W2)
             else:  # we can also use cosine similarity and transfer it into distribution
                 Wout = theano.shared(sample_weights(4 * self.N_hidden, self.N_out), name='Wout')
                 representation = T.concatenate([question_representation, oa_yes], axis=1)

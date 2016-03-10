@@ -53,7 +53,7 @@ class QASentdataPreprocess(dataPreprocess):
                         one_question['right'].append(self.get_sentence_id_list(content))
                     elif tag == 'negative':
                         one_question['wrong'].append(self.get_sentence_id_list(content))
-                if len(one_question['right']) ==0 or len(one_question['wrong'])==0:
+                if len(one_question['right']) == 0 or len(one_question['wrong']) == 0:
                     continue
                 data.append(one_question)
             if train:

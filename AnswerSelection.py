@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 
+from DataProcessor.QASent import QASentdataPreprocess
 from DataProcessor.QASentForServer import QASentForServerdataPreprocess
 from DataProcessor.WikiQA import WikiQAdataPreprocess
 from DataProcessor.insuranceQA import insuranceQAPreprocess
@@ -28,7 +29,7 @@ class AnswerSelection(TaskBases):
         elif DATASET == WikiQA:
             self.Data = WikiQAdataPreprocess(**kwargs)
         else:
-            self.Data = QASentForServerdataPreprocess(**kwargs)
+            self.Data = QASentdataPreprocess(**kwargs)
         if MODEL == IAGru:
             self.Model = IAGRU(data=self.Data, **kwargs)
         elif MODEL == OAGru_SMALL:
@@ -72,7 +73,7 @@ class AnswerSelection(TaskBases):
     def output_softmax(self):
         print 'start output softmax'
         self.Model.load_model(
-            self.Model.model_file_base_path + '03-07-21:11:16WikiQA_MAP_0.555602986025_MRR_0.56631592573.pickle')
+            self.Model.model_file_base_path + '03-09-13:23:30WikiQA_MAP_0.623834547368_MRR_0.636164544189.pickle')
         length = len(self.Data.TRAIN[0])
         pool_list = list()
         tran = lambda x: '_'.join(map(str, x.tolist()))
@@ -91,14 +92,14 @@ class AnswerSelection(TaskBases):
                 pool_list.append(tran(sample))
                 softmax = self.Model.test_function(question, sample)
                 softmax_pool.append(softmax)
-        dump_file(obj=softmax_pool, filepath='softmax_result555.pickle')
+        dump_file(obj=softmax_pool, filepath='softmax_result123.pickle')
 
 
 if __name__ == '__main__':
-    c = AnswerSelection(optmizer='adadelta', MODEL=OAGru, DATASET=WikiQA, batch_training=False, sampling=3,
-                        reload=False,
-                        output_softmax=False,
+    c = AnswerSelection(optmizer='adadelta', MODEL=OAGru, DATASET=insuranceQA, batch_training=False, sampling=3,
+                        reload=True,
+                        output_softmax=True,
                         Margin=0.15,
                         use_the_last_hidden_variable=False, use_clean=True, epochs=50, Max_length=50,
-                        N_hidden=150)
+                        N_hidden=180)
     c.output_softmax()

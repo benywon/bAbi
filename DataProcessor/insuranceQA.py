@@ -53,7 +53,7 @@ class insuranceQAPreprocess(dataPreprocess):
                 answer_sentence = get_sentence_id(divs[1])
                 answer_pool[id] = answer_sentence
         pool_size = len(answer_pool)
-
+        cc=np.mean([len(answer_pool[x]) for x in answer_pool])
         def get_test_or_dev_set(filepath):
             print 'process:' + filepath + '...'
             target = []

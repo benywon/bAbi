@@ -168,12 +168,15 @@ def build_model_batch():
     N_out = 3
     if classfication:
         if N_out > 2:
-            Wout = theano.shared(sample_weights(4 * N_hidden, N_out), name='Wout')
-            representation = T.concatenate([question_representations, oa_yes], axis=1)
+            W1 = theano.shared(sample_weights(2 * N_hidden, 2 * N_hidden), name='w1')
+            W2 = theano.shared(sample_weights(2 * N_hidden, 2 * N_hidden), name='w2')
+            representation = T.tanh(T.dot(question_representations,W1) + T.dot(oa_yes,W2))
+            Wout = theano.shared(sample_weights(2 * N_hidden, N_out), name='Wout')
             prediction = T.nnet.softmax_graph(T.dot(representation, Wout))
             loss = T.nnet.categorical_crossentropy(prediction, In_answer_wrong)
             prediction_label = T.argmax(prediction, axis=1)
-            all_params.append(Wout)
+            # all_params.append(Wout)
+            pass
         else:  # we can also use cosine similarity and transfer it into distribution
             Wout = theano.shared(sample_weights(4 * N_hidden, N_out), name='Wout')
             representation = T.concatenate([question_representations, oa_yes], axis=1)
@@ -181,7 +184,7 @@ def build_model_batch():
             loss = T.nnet.categorical_crossentropy(prediction, In_answer_wrong)
             prediction_label = T.argmax(prediction, axis=1)
             all_params.append(Wout)
-        loss = T.mean(loss)
+            loss = T.mean(loss)
     else:
         predict_yes, _ = theano.scan(cosine, sequences=[oa_yes, question_representations])
         predict_no, _ = theano.scan(cosine, sequences=[oa_no, question_representations])
@@ -195,13 +198,13 @@ def build_model_batch():
 
     print 'start compile function...'
     train = theano.function([In_quesiotion, In_answer_right, In_answer_wrong],
-                            outputs=[prediction, prediction_label],
+                            outputs=[loss,prediction_label],
                             # updates=updates,
                             on_unused_input='ignore',
                             allow_input_downcast=True)
 
     test = theano.function([In_quesiotion, In_answer_right],
-                           outputs=representation,
+                           outputs=In_quesiotion,
                            on_unused_input='ignore',
                            allow_input_downcast=True)
     print 'build model done!'

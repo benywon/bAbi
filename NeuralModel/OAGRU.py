@@ -38,7 +38,7 @@ class OAGRU(ModelBase):
         print 'negative sample size:\t' + str(self.sampling)
         print 'RNN mode:\t' + self.RNN_MODE
 
-    def build_model_sample_beta(self, output_softmax=False):
+    def build_model_sample2(self, output_softmax=False):
         """
         if you are in classfication mode
         In_question is the premise or the first sentence
@@ -256,11 +256,9 @@ class OAGRU(ModelBase):
         else:
             forward = RNN(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize)
             backward = RNN(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize, backwards=True)
-
         Wam = theano.shared(sample_weights(2 * self.N_hidden, 2 * self.N_hidden), name='Wam')
         Wms = theano.shared(rng.uniform(-0.3, 0.3, size=(2 * self.N_hidden)), name='Wms')
         Wqm = theano.shared(sample_weights(2 * self.N_hidden, 2 * self.N_hidden), name='Wqm')
-
         def get_gru_representation(In_embedding):
             forward.build(In_embedding)
             backward.build(In_embedding)
