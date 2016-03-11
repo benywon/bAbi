@@ -156,7 +156,7 @@ class IAGRU(ModelBase):
         In_quesiotion = T.imatrix('in_question')
         In_answer_right = T.imatrix('in_answer_right')
         In_answer_wrong = T.imatrix('in_answer_wrong')
-        EmbeddingMatrix = theano.shared(np.asanyarray(self.wordEmbedding, dtype='float64'), name='WordEmbedding', )
+        EmbeddingMatrix = theano.shared(np.asanyarray(self.wordEmbedding, dtype='float64'), name='WordEmbedding')
         in_question_embeddings = EmbeddingMatrix[In_quesiotion]
         in_answer_right_embeddings = EmbeddingMatrix[In_answer_right]
         in_answer_wrong_embeddings = EmbeddingMatrix[In_answer_wrong]

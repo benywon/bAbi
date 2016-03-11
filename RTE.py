@@ -69,8 +69,9 @@ if __name__ == '__main__':
             RNN_MODE='GRU',
             reload=True,
             Margin=0.15,
+            EmbeddingSize=300,
             N_out=3,
             max_batch_size=32,
             use_the_last_hidden_variable=False, epochs=150, Max_length=80,
-            N_hidden=130)
+            N_hidden=150)
     c.Train()

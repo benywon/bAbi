@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from DataProcessor.dataPreprocess import dataPreprocess
 from public_functions import *
+from word2vec import load_word2vec300withoutLOOP
 
 __author__ = 'benywon'
 
@@ -20,7 +21,6 @@ class SNLI(dataPreprocess):
             self.load_data()
         self.calc_data_stat()
         self.dataset_name = 'SNLI'
-
     def __build_data_set__(self):
         print 'start loading data from original file'
         trainfilepath = self.path + 'snli_1.0_train.txt'
@@ -36,7 +36,7 @@ class SNLI(dataPreprocess):
                 no = []
                 for line in f:
                     txts = line.split('\t')
-                    label_str = txts[4]
+                    label_str = txts[0]
                     premise = self.get_sentence_id_list(txts[5], max_length=self.Max_length)
                     hypothesis = self.get_sentence_id_list(txts[6], max_length=self.Max_length)
                     label_index = 0 if label_str == 'entailment' else 1 if label_str == 'neutral' else 2

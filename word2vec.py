@@ -89,8 +89,10 @@ class word2vector():
         return vec
 
 
-def load_word2vec300withoutLOOP(word2id,):
-    wordEmbedding=[]
+def load_word2vec300withoutLOOP(word2id):
+    vocabularySize = len(word2id)
+    assert len(word2id) > 0, 'you have not load word2id!!'
+    wordEmbedding = np.zeros(shape=(vocabularySize, 300), dtype='float32')
     print 'load word2vec from miklov file:size 300'
     fname = './data/word2vec/GoogleNews-vectors-negative300.bin'
     with open(fname, "rb") as f:
