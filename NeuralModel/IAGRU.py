@@ -137,11 +137,13 @@ class IAGRU(ModelBase):
         updates = self.get_update(loss=loss)
 
         print 'start compile function...'
-
-        train = theano.function([In_question, In_answer_right, In_answer_wrong],
-                                outputs=loss,
-                                updates=updates,
-                                allow_input_downcast=True)
+        if output_softmax:
+            train = None
+        else:
+            train = theano.function([In_question, In_answer_right, In_answer_wrong],
+                                    outputs=loss,
+                                    updates=updates,
+                                    allow_input_downcast=True)
         if output_softmax:
             test = theano.function([In_question, In_answer_right], outputs=softmax, on_unused_input='ignore',
                                    allow_input_downcast=True)

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import cPickle
 import numpy as np
+import os
 import re
 import threading
 
@@ -130,6 +131,13 @@ def pad_index2distribution(index, classes):
     li[index] = 1
     return li
 
+
+def get_dir_files(director):
+    file_list = []
+    for parent, dirnames, filenames in os.walk(director):
+        for filename in filenames:
+            file_list.append(os.path.join(parent,filename))
+    return file_list
 
 class sort_utils(threading.Thread):
     """

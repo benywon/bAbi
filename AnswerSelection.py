@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 
-from DataProcessor.QASent import QASentdataPreprocess
+# from DataProcessor.QASent import QASentdataPreprocess
 from DataProcessor.QASentForServer import QASentForServerdataPreprocess
 from DataProcessor.WikiQA import WikiQAdataPreprocess
 from DataProcessor.insuranceQA import insuranceQAPreprocess
 from NeuralModel.IAGRU import IAGRU
 from NeuralModel.OAGRU import OAGRU, OAGRU_small
 from TaskBase import TaskBases
-from public_functions import dump_file
+from public_functions import *
 
 __author__ = 'benywon'
 
@@ -29,7 +29,7 @@ class AnswerSelection(TaskBases):
         elif DATASET == WikiQA:
             self.Data = WikiQAdataPreprocess(**kwargs)
         else:
-            self.Data = QASentdataPreprocess(**kwargs)
+            self.Data = QASentForServerdataPreprocess(**kwargs)
         if MODEL == IAGru:
             self.Model = IAGRU(data=self.Data, **kwargs)
         elif MODEL == OAGru_SMALL:
@@ -62,6 +62,7 @@ class AnswerSelection(TaskBases):
                         first_one_position = (i + 1)
                     right_index += 1
                     result += right_index / (i + 1)
+
             final_result_MAP.append(result / right_index)
             final_result_MRR.append(1.0 / first_one_position)
         MAP = np.mean(np.asarray(final_result_MAP))
@@ -69,11 +70,11 @@ class AnswerSelection(TaskBases):
         print 'final-result-MAP:' + str(MAP)
         print 'final-result-MRR:' + str(MRR)
         return MAP, MRR
-
-    def output_softmax(self):
+    def testACC(self):
+        pass
+    def output_softmax(self,number=0,path=None):
         print 'start output softmax'
-        self.Model.load_model(
-            self.Model.model_file_base_path + '03-09-13:23:30WikiQA_MAP_0.623834547368_MRR_0.636164544189.pickle')
+        self.Model.load_model(path)
         length = len(self.Data.TRAIN[0])
         pool_list = list()
         tran = lambda x: '_'.join(map(str, x.tolist()))
@@ -92,14 +93,18 @@ class AnswerSelection(TaskBases):
                 pool_list.append(tran(sample))
                 softmax = self.Model.test_function(question, sample)
                 softmax_pool.append(softmax)
-        dump_file(obj=softmax_pool, filepath='softmax_result123.pickle')
-
+        dump_file(obj=softmax_pool, filepath=str(number)+'softmax_result_i.pickle')
+    def getO(self):
+        fileList=get_dir_files('/home/benywon/PycharmProjects/bAbi/model/IAGRU/test')
+        for i,filename in enumerate(fileList):
+            self.output_softmax(number=i,path=filename)
 
 if __name__ == '__main__':
-    c = AnswerSelection(optmizer='adadelta', MODEL=OAGru, DATASET=WikiQA, batch_training=False, sampling=3,
-                        reload=True,
-                        output_softmax=False,
-                        Margin=0.15,
+    c = AnswerSelection(optmizer='adadelta', MODEL=IAGru, DATASET=WikiQA, batch_training=False, sampling=3,
+                        reload=False,
+                        output_softmax=True,
+                        Margin=0.12,
                         use_the_last_hidden_variable=False, use_clean=True, epochs=50, Max_length=50,
-                        N_hidden=180)
-    c.output_softmax()
+                        N_hidden=150)
+    c.getO()
+
