@@ -336,6 +336,12 @@ class GRU(RNN):
 
 class Highway(RNN):
     """
+    it need to mention that the mechanism of Highway network could be
+    implemented in any neural work other than RNN such as MLP. The carry-gate
+    could carry the input information directly to the final representation
+    which is really similar to,...emh,...highway...
+
+    '''
     C= sigm (W xc x t + W hc h t−1 + b c ) # carry gate in Highway network
     h't = tanh(W xh x t + W hh h t−1 + b h )
     h t = h'tC + x(1-C)
