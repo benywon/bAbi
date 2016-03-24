@@ -1,5 +1,30 @@
 # -*- coding: utf-8 -*- 
 __author__ = 'benywon'
+
+"""
+An theano implementation of recurrent neural network,
+it could be used as an inner layer for your network,
+all the input and output are theano tensor variables
+
+---------------------------example:--------------------------------------------------------------
+backward = GRU(N_hidden=self.N_hidden, batch_mode=True, N_in=self.EmbeddingSize, backwards=True)
+backward.build(In_embedding) # In_embedding is your embedding matrix(theano.tensor)
+lstm_backward = backward.get_hidden() #the GRU_RNN hidden variable(theano.tensor)
+...
+# when calculate parameter for theano updates
+all_params.extend(backward.get_parameter())
+------------------------------------------------------------------------------------------------
+"""
+
+"""
+we recommend to use hard_sigmoid as inner activation
+tanh for hidden-hidden function, any other implementation is available in theano.tensor.nnet.
+so we omit it for convenience
+
+problem and further development please contact: research@bingning.wang
+
+"""
+
 import numpy as np
 
 import theano
@@ -12,27 +37,6 @@ sigmoid = lambda x: 1 / (1 + T.exp(-x))
 rng = np.random.RandomState(1991)
 
 theano.config.exception_verbosity = 'high'
-
-"""
-this is the main function to utilize theano to build a RNN layer
-
-the input should be a theano shared variable
-
-and the output is either a theano shared variable or update parameter
-
-you can use it directly in your model building process
-
-you can use LSTM GRU and valina RNN to build your model
-
-remember that if you
-
-"""
-
-"""
-after long period experience
-I noticed that the best inner active function is sigmoid
-however the hidden to output is tanh
-"""
 
 
 class RNN:
@@ -173,9 +177,7 @@ class LSTM(RNN):
     this is my implementation of lstm
     borrow heavily from this blog
     http://christianherta.de/lehre/dataScience/machineLearning/neuralNetworks/LSTM.php
-    you can get your own parameters
-
-
+    '''
     i t = tanh(W xi x t + W hi h t−1 + b i )
     j t = sigmoid(W xj x t + W hj h t−1 + b j )
     f t = sigmoid(W xf x t + W hf h t−1 + b f )
@@ -252,7 +254,7 @@ class LSTM(RNN):
         """
         this is the inner step for calc lstm
 
-        remember that we use sigma function to make sure the output lie in sigmoid 0-1
+        remember that we use sigma function to make sure the output normalized to 0-1
 
         :return: the hidden and c_t y_t state
         """
@@ -382,9 +384,12 @@ class Highway(RNN):
 
 class GRU_Attention(RNN):
     """
-    r t = sigm (W xr x t + W hr h t−1 + b r )
-    z t = sigm(W xz x t + W hz h t−1 + b z )
-    h' t = tanh(W xh x t + W hh (r t  h t−1 ) + b h )
+    wct=Mhc*h t-1 +Mqc
+    act=sigm(wct*xt)
+    x't=actxt
+    r t = sigm (W xr x' t + W hr h t−1 + b r )
+    z t = sigm(W xz x' t + W hz h t−1 + b z )
+    h' t = tanh(W xh x' t + W hh (r t  h t−1 ) + b h )
     h t = z t  h t−1 + (1 − z t )  h 't
     """
 
