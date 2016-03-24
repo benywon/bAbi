@@ -280,8 +280,6 @@ class LSTM(RNN):
         return [h_t, c_t, o_t]
 
 
-# TODO: implementation of GRU and clockwise RNN
-
 class GRU(RNN):
     """
     r t = sigm (W xr x t + W hr h t−1 + b r )
@@ -334,6 +332,22 @@ class GRU(RNN):
         if self.ignore_zero:
             return [h_t, h_t], theano.scan_module.until(T.eq(T.sum(abs(x_t)), 0))
         return [h_t, h_t]
+
+
+class Highway(RNN):
+    """
+    C= sigm (W xc x t + W hc h t−1 + b c ) #carry gate in Highway network
+    o t = tanh(W xo x t + W ho h t−1 + b o )
+    h' t = tanh(W xh x t + W hh (r t  h t−1 ) + b h )
+    h t = z t  h t−1 + (1 − z t )  h 't
+    """
+
+    def __init__(self,
+                 b_i_init=(-0.5, 0.5),
+                 act=T.tanh,
+                 **kwargs):
+        # init parent attributes
+        RNN.__init__(self, **kwargs)
 
 
 class GRU_Attention(RNN):
