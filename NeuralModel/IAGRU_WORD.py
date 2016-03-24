@@ -26,6 +26,7 @@ class IAGRU_WORD(ModelBase):
         assert len(self.wordEmbedding) > 0, 'you have not initiate data!!!'
         self.build_model()
         self.print_model_info(model_name='IAGRU_WORD')
+        self.print_model_info(model_name='IAGRU_WORD')
 
 
     @ModelBase.print_model_info
