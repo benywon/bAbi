@@ -336,18 +336,42 @@ class GRU(RNN):
 
 class Highway(RNN):
     """
-    C= sigm (W xc x t + W hc h t−1 + b c ) #carry gate in Highway network
-    o t = tanh(W xo x t + W ho h t−1 + b o )
-    h' t = tanh(W xh x t + W hh (r t  h t−1 ) + b h )
-    h t = z t  h t−1 + (1 − z t )  h 't
+    C= sigm (W xc x t + W hc h t−1 + b c ) # carry gate in Highway network
+    h't = tanh(W xh x t + W hh h t−1 + b h )
+    h t = h'tC + x(1-C)
     """
 
     def __init__(self,
-                 b_i_init=(-0.5, 0.5),
-                 act=T.tanh,
+                 b_i_init=(0, 1),
                  **kwargs):
         # init parent attributes
         RNN.__init__(self, **kwargs)
+        self.W_xc = theano.shared(self.sample_weights(self.N_in, self.N_hidden))
+        self.W_hc = theano.shared(self.sample_weights(self.N_hidden, self.N_hidden))
+        self.b_c = theano.shared(np.cast[dtype](np.random.uniform(b_i_init[0], b_i_init[1], size=self.N_hidden)))
+        self.params.extend([self.W_xc, self.W_hc, self.b_c])
+
+    def get_sequences(self):
+        return [self.W_xc, self.W_hc, self.b_c, self.W_ih, self.W_hh, self.W_ho, self.b_o,
+                self.b_h]
+
+    def one_step(self, x_t, h_tm1, W_xc, W_hc, b_c, W_ih, W_hh, W_ho, b_o, b_h):
+        C = sigmoid(theano.dot(x_t, W_xc) + theano.dot(h_tm1, W_hc) + b_c)
+        h_t_hat = T.tanh(theano.dot(x_t, W_ih) + theano.dot(h_tm1, W_hh) + b_h)
+        h_t = (1 - C) * h_t_hat + C * x_t
+        y_t = theano.dot(h_t, W_ho) + b_o
+        y_t = sigmoid(y_t)
+        if self.ignore_zero:
+            return [h_t, y_t], theano.scan_module.until(T.eq(T.sum(abs(x_t)), 0))
+        return [h_t, y_t]
+
+    def one_step_no_output(self, x_t, h_tm1, W_xc, W_hc, b_c, W_ih, W_hh, W_ho, b_o, b_h):
+        C = sigmoid(theano.dot(x_t, W_xc) + theano.dot(h_tm1, W_hc) + b_c)
+        h_t_hat = T.tanh(theano.dot(x_t, W_ih) + theano.dot(h_tm1, W_hh) + b_h)
+        h_t = (1 - C) * h_t_hat + C * x_t
+        if self.ignore_zero:
+            return [h_t, h_t], theano.scan_module.until(T.eq(T.sum(abs(x_t)), 0))
+        return [h_t, h_t]
 
 
 class GRU_Attention(RNN):
@@ -427,11 +451,24 @@ class GRU_Attention(RNN):
 
 
 if __name__ == '__main__':
-    a = GRU_Attention(N_in=50, batch_mode=False, N_hidden=50, only_return_final=False, backwards=True)
+    # a = GRU_Attention(N_in=50, batch_mode=False, N_hidden=50, only_return_final=False, backwards=True)
+    # # ain = np.ones(300,).reshape((5,6, 10))
+    # ain = rng.normal(size=(10, 50))
+    # atten = rng.normal(size=(50))
+    # a.add_attention(atten)
+    # # in_vector = T.tensor3('inv')  # this should be replaced by your theano shared variable or T input
+    # in_vector = T.fmatrix('inv')  # this should be replaced by your theano shared variable or T input
+    # N_0 = in_vector.shape[0]
+    # a.build(in_vector)
+    # hid = a.get_hidden()
+    # params = a.get_parameter()  # to updates parameter use this params
+    # fun = theano.function([in_vector], outputs=[hid, in_vector], allow_input_downcast=True)
+    # hidden_output = fun(ain)
+    # print hidden_output
+    # print hidden_output
+    a = Highway(N_in=50, batch_mode=False, N_hidden=50, only_return_final=False, backwards=True)
     # ain = np.ones(300,).reshape((5,6, 10))
     ain = rng.normal(size=(10, 50))
-    atten = rng.normal(size=(50))
-    a.add_attention(atten)
     # in_vector = T.tensor3('inv')  # this should be replaced by your theano shared variable or T input
     in_vector = T.fmatrix('inv')  # this should be replaced by your theano shared variable or T input
     N_0 = in_vector.shape[0]
