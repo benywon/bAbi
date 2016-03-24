@@ -151,7 +151,6 @@ class RNN:
     def get_parameter(self):
         return self.params
 
-
     def get_hidden(self):
         if self.ignore_zero:
             self.h_vals = self.h_vals[0:-1]
@@ -175,6 +174,17 @@ class LSTM(RNN):
     borrow heavily from this blog
     http://christianherta.de/lehre/dataScience/machineLearning/neuralNetworks/LSTM.php
     you can get your own parameters
+
+
+    i t = tanh(W xi x t + W hi h t−1 + b i )
+    j t = sigmoid(W xj x t + W hj h t−1 + b j )
+    f t = sigmoid(W xf x t + W hf h t−1 + b f )
+    o t = tanh(W xo x t + W ho h t−1 + b o )
+    c t = c t−1  f t + i t  j t
+    h t = tanh(c t )  o t
+
+     is gate operation
+
     """
 
     def __init__(self,
@@ -326,15 +336,95 @@ class GRU(RNN):
         return [h_t, h_t]
 
 
+class GRU_Attention(RNN):
+    """
+    r t = sigm (W xr x t + W hr h t−1 + b r )
+    z t = sigm(W xz x t + W hz h t−1 + b z )
+    h' t = tanh(W xh x t + W hh (r t  h t−1 ) + b h )
+    h t = z t  h t−1 + (1 − z t )  h 't
+    """
+
+    def __init__(self,
+                 b_i_init=(-0.5, 0.5),
+                 act=T.tanh,
+                 **kwargs):
+        # init parent attributes
+        RNN.__init__(self, **kwargs)
+        self.act = act
+        self.W_iz = theano.shared(self.sample_weights(self.N_in, self.N_hidden))
+        self.W_hz = theano.shared(self.sample_weights(self.N_hidden, self.N_hidden))
+        self.W_ir = theano.shared(self.sample_weights(self.N_in, self.N_hidden))
+        self.W_hr = theano.shared(self.sample_weights(self.N_hidden, self.N_hidden))
+        self.b_z = theano.shared(np.cast[dtype](np.random.uniform(b_i_init[0], b_i_init[1], size=self.N_hidden)))
+        self.b_r = theano.shared(np.cast[dtype](np.random.uniform(b_i_init[0], b_i_init[1], size=self.N_hidden)))
+        # attention matrix
+        self.M_hc = theano.shared(self.sample_weights(self.N_hidden, self.N_hidden))
+        self.M_qc = theano.shared(self.sample_weights(self.N_hidden, self.N_hidden))
+        self.w_c = theano.shared(np.cast[dtype](np.random.uniform(b_i_init[0], b_i_init[1], size=self.N_hidden)))
+
+        self.params.extend(
+            [self.W_iz, self.W_hz, self.W_ir, self.W_hr, self.b_z, self.b_r, self.M_hc, self.M_qc,
+             self.w_c])
+        self.attention_in = None
+
+    def add_attention(self, attention_in):
+        self.attention_in = attention_in
+
+    def get_sequences(self):
+        assert self.attention_in is not None, 'attention resource is none!!!!!'
+        return [self.W_iz, self.W_hz, self.b_z, self.W_ir, self.W_hr,
+                self.b_r, self.W_ih, self.W_hh, self.W_ho, self.b_o,
+                self.b_h, self.M_hc, self.M_qc, self.w_c, self.attention_in]
+
+    def one_step(self, x_t, h_tm1, W_iz, W_hz, b_z, W_ir, W_hr, b_r, W_ih, W_hh, W_ho, b_o, b_h, M_hc, M_qc, w_c,
+                 attention_in):
+        wct = T.dot(h_tm1, M_hc) + T.dot(attention_in, M_qc)
+        act = sigmoid(T.dot(wct.T, x_t))
+        x_t_hat = act * x_t
+        zt = sigmoid(theano.dot(x_t_hat, W_iz) + theano.dot(h_tm1, W_hz) + b_z)
+        rt = sigmoid(theano.dot(x_t_hat, W_ir) + theano.dot(h_tm1, W_hr) + b_r)
+        rtht_1 = rt * h_tm1
+        ht_hat = T.tanh(theano.dot(x_t_hat, W_ih) + theano.dot(rtht_1, W_hh) + b_h)
+        h_t = (1 - zt) * h_tm1 + zt * ht_hat
+        y_t = theano.dot(h_t, W_ho) + b_o
+        y_t = sigmoid(y_t)
+        if self.ignore_zero:
+            return [h_t, y_t], theano.scan_module.until(T.eq(T.sum(abs(x_t)), 0))
+        return [h_t, y_t]
+
+    def one_step_no_output(self, x_t, h_tm1, W_iz, W_hz, b_z, W_ir, W_hr, b_r, W_ih, W_hh, W_ho, b_o, b_h, M_hc, M_qc,
+                           w_c,
+                           attention_in):
+        """
+        function that did not calculate the output data
+        """
+        print 'sttt'
+        wct = T.dot(h_tm1, M_hc) + T.dot(attention_in, M_qc)
+        act = sigmoid(T.dot(wct.T, x_t))
+        x_t_hat = act * x_t
+        zt = sigmoid(theano.dot(x_t_hat, W_iz) + theano.dot(h_tm1, W_hz) + b_z)
+        rt = sigmoid(theano.dot(x_t_hat, W_ir) + theano.dot(h_tm1, W_hr) + b_r)
+        rtht_1 = rt * h_tm1
+        ht_hat = T.tanh(theano.dot(x_t_hat, W_ih) + theano.dot(rtht_1, W_hh) + b_h)
+        h_t = (1 - zt) * h_tm1 + zt * ht_hat
+        if self.ignore_zero:
+            return [h_t, h_t], theano.scan_module.until(T.eq(T.sum(abs(x_t)), 0))
+        return [h_t, h_t]
+
+
 if __name__ == '__main__':
-    a = GRU(N_in=50, batch_mode=True, N_hidden=50, only_return_final=False, backwards=True)
+    a = GRU_Attention(N_in=50, batch_mode=False, N_hidden=50, only_return_final=False, backwards=True)
     # ain = np.ones(300,).reshape((5,6, 10))
-    ain = rng.normal(size=(10, 12, 50))
-    in_vector = T.tensor3('inv')  # this should be replaced by your theano shared variable or T input
+    ain = rng.normal(size=(10, 50))
+    atten = rng.normal(size=(50))
+    a.add_attention(atten)
+    # in_vector = T.tensor3('inv')  # this should be replaced by your theano shared variable or T input
+    in_vector = T.fmatrix('inv')  # this should be replaced by your theano shared variable or T input
     N_0 = in_vector.shape[0]
     a.build(in_vector)
     hid = a.get_hidden()
     params = a.get_parameter()  # to updates parameter use this params
-    fun = theano.function([in_vector], outputs=[hid, in_vector])
+    fun = theano.function([in_vector], outputs=[hid, in_vector], allow_input_downcast=True)
     hidden_output = fun(ain)
+    print hidden_output
     print hidden_output

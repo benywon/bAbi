@@ -5,7 +5,7 @@ import numpy as np
 from DataProcessor.QASentForServer import QASentForServerdataPreprocess
 from DataProcessor.WikiQA import WikiQAdataPreprocess
 from DataProcessor.insuranceQA import insuranceQAPreprocess
-from NeuralModel.IAGRU import IAGRU
+from NeuralModel.IAGRU_WORD import IAGRU_WORD
 from NeuralModel.OAGRU import OAGRU, OAGRU_small
 from TaskBase import TaskBases
 from public_functions import *
@@ -31,7 +31,7 @@ class AnswerSelection(TaskBases):
         else:
             self.Data = QASentForServerdataPreprocess(**kwargs)
         if MODEL == IAGru:
-            self.Model = IAGRU(data=self.Data, **kwargs)
+            self.Model = IAGRU_WORD(data=self.Data, **kwargs)
         elif MODEL == OAGru_SMALL:
             self.Model = OAGRU_small(data=self.Data, **kwargs)
         else:

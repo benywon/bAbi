@@ -2,7 +2,7 @@
 
 from AnswerSelection import IAGru, OAGru_SMALL
 from DataProcessor.MSRPD import MSRPD
-from NeuralModel.IAGRU import IAGRU
+from NeuralModel.IAGRU_WORD import IAGRU_WORD
 from NeuralModel.OAGRU import OAGRU_small, OAGRU
 from TaskBase import TaskBases
 
@@ -18,7 +18,7 @@ class ParaphraseDetection(TaskBases):
             self.Data = MSRPD(**kwargs)
 
         if MODEL == IAGru:
-            self.Model = IAGRU(data=self.Data, classfication=True, **kwargs)
+            self.Model = IAGRU_WORD(data=self.Data, classfication=True, **kwargs)
         elif MODEL == OAGru_SMALL:
             self.Model = OAGRU_small(data=self.Data, classfication=True, **kwargs)
         else:

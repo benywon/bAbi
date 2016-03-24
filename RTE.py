@@ -6,7 +6,7 @@ from DataProcessor.SNLI import SNLI
 
 __author__ = 'benywon'
 from AnswerSelection import IAGru, OAGru_SMALL
-from NeuralModel.IAGRU import IAGRU
+from NeuralModel.IAGRU_WORD import IAGRU_WORD
 from NeuralModel.OAGRU import OAGRU_small, OAGRU
 from TaskBase import TaskBases
 
@@ -30,7 +30,7 @@ class RTE(TaskBases):
         elif DATASET == SICK_DATA:
             self.Data = SICK(**kwargs)
         if MODEL == IAGru:
-            self.Model = IAGRU(data=self.Data, classfication=True, **kwargs)
+            self.Model = IAGRU_WORD(data=self.Data, classfication=True, **kwargs)
         elif MODEL == OAGru_SMALL:
             self.Model = OAGRU_small(data=self.Data, classfication=True, **kwargs)
         else:

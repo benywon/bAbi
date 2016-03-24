@@ -11,10 +11,12 @@ import theano
 sigmoids = lambda x: 1 / (1 + T.exp(-x))
 
 
-class IAGRU(ModelBase):
+class IAGRU_WORD(ModelBase):
     def __init__(self, RNN_MODE='GRU', max_ave_pooling='ave', use_the_last_hidden_variable=False, Margin=0.1,
+                 IAGRU_type='word',
                  **kwargs):
         ModelBase.__init__(self, **kwargs)
+        self.IAGRU_type = IAGRU_type
         self.RNN_MODE = RNN_MODE
         self.Model_name = 'IAGRU'
         self.Margin = Margin
@@ -23,10 +25,11 @@ class IAGRU(ModelBase):
         self.model_file_base_path = './model/IAGRU/'
         assert len(self.wordEmbedding) > 0, 'you have not initiate data!!!'
         self.build_model()
-        self.print_model_info(model_name='IAGRU')
+        self.print_model_info(model_name='IAGRU_WORD')
+
 
     @ModelBase.print_model_info
-    def print_model_info(self, model_name='IAGRU'):
+    def print_model_info(self, model_name='IAGRU_WORD'):
         """
         remember to add model name when call this function
         :param model_name:
@@ -255,7 +258,61 @@ class IAGRU(ModelBase):
                                allow_input_downcast=True)
         print 'build model done!'
         return train, test
+class IAGRU_CONTEXT(ModelBase):
+    def __init__(self, RNN_MODE='GRU', max_ave_pooling='ave', use_the_last_hidden_variable=False, Margin=0.1,
+                 IAGRU_type='word',
+                 **kwargs):
+        ModelBase.__init__(self, **kwargs)
+        self.IAGRU_type = IAGRU_type
+        self.RNN_MODE = RNN_MODE
+        self.Model_name = 'IAGRU'
+        self.Margin = Margin
+        self.use_the_last_hidden_variable = use_the_last_hidden_variable
+        self.max_ave_pooling = max_ave_pooling
+        self.model_file_base_path = './model/IAGRU/'
+        assert len(self.wordEmbedding) > 0, 'you have not initiate data!!!'
+        self.build_model()
+        self.print_model_info(model_name='IAGRU_CONTEXT')
+    @ModelBase.print_model_info
+    def print_model_info(self, model_name='IAGRU_WORD'):
+        """
+        remember to add model name when call this function
+        :param model_name:
+        :return:
+        """
+        print 'use the last hidden variable as output:\t' + str(self.use_the_last_hidden_variable)
+        print 'max or ave pooling?\t' + str(self.max_ave_pooling)
+        print 'Embedding size:\t' + str(self.EmbeddingSize)
+        print 'dictionary size:\t' + str(self.vocabularySize)
+        print 'Margin:\t' + str(self.Margin)
+        print 'negative sample size:\t' + str(self.sampling)
+        print 'RNN mode:\t' + self.RNN_MODE
+
+    def build_model_sample(self, output_softmax, only_for_test=False):
+        print 'start building model IAGRU sample...'
+        In_question = T.ivector('in_question')
+        In_answer_right = T.ivector('in_answer_right')
+        In_answer_wrong = T.ivector('in_answer_wrong')
+        EmbeddingMatrix = theano.shared(np.asanyarray(self.wordEmbedding, dtype='float64'), name='WordEmbedding', )
+        in_question_embedding = EmbeddingMatrix[In_question]
+        in_answer_right_embedding = EmbeddingMatrix[In_answer_right]
+        in_answer_wrong_embedding = EmbeddingMatrix[In_answer_wrong]
+        # this is the shared function
+
+        if self.RNN_MODE == 'GRU':
+            forward = GRU(N_hidden=self.N_hidden, N_in=self.EmbeddingSize)
+            backward = GRU(N_hidden=self.N_hidden, N_in=self.EmbeddingSize, backwards=True)
+        elif self.RNN_MODE == 'LSTM':
+            forward = LSTM(N_hidden=self.N_hidden, N_in=self.EmbeddingSize)
+            backward = LSTM(N_hidden=self.N_hidden, N_in=self.EmbeddingSize, backwards=True)
+        else:
+            forward = RNN(N_hidden=self.N_hidden, N_in=self.EmbeddingSize)
+            backward = RNN(N_hidden=self.N_hidden, N_in=self.EmbeddingSize, backwards=True)
+
+
+
+
 
 
 if __name__ == '__main__':
-    ia = IAGRU(batch_training=True)
+    ia = IAGRU_WORD(batch_training=True)
