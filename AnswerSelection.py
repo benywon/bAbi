@@ -100,11 +100,11 @@ class AnswerSelection(TaskBases):
             self.output_softmax(number=i,path=filename)
 
 if __name__ == '__main__':
-    c = AnswerSelection(optmizer='adadelta', MODEL=IAGru, DATASET=WikiQA, batch_training=False, sampling=3,
+    c = AnswerSelection(optmizer='adadelta', MODEL=IAGru, DATASET=WikiQA, batch_training=False, sampling=2,
                         reload=False,
-                        output_softmax=True,
+                        output_softmax=False,
                         Margin=0.12,
                         use_the_last_hidden_variable=False, use_clean=True, epochs=50, Max_length=50,
                         N_hidden=150)
-    c.getO()
+    c.Train()
 

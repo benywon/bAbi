@@ -38,7 +38,7 @@ class OAGRU(ModelBase):
         print 'negative sample size:\t' + str(self.sampling)
         print 'RNN mode:\t' + self.RNN_MODE
 
-    def build_model_sample2(self, output_softmax=False):
+    def build_model_sample(self, output_softmax=False):
         """
         if you are in classfication mode
         In_question is the premise or the first sentence
@@ -140,7 +140,7 @@ class OAGRU(ModelBase):
                                    allow_input_downcast=True)
         print 'build model done!'
         return train, test
-    def build_model_sample(self, output_softmax=False):
+    def build_model_sample2(self, output_softmax=False):
         """
         if you are in classfication mode
         In_question is the premise or the first sentence

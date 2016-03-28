@@ -161,6 +161,7 @@ class RNN:
         if self.only_return_final:
             return self.h_vals[-1]
         else:
+            # return self.h_vals[::-1] if self.backwards else self.h_vals
             return self.h_vals
 
     def get_output(self):
@@ -169,7 +170,7 @@ class RNN:
         if self.only_return_final:
             return self.y_vals[-1]
         else:
-            return self.y_vals
+            return self.y_vals[::-1] if self.backwards else self.y_vals
 
 
 class LSTM(RNN):
