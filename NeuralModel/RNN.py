@@ -136,7 +136,7 @@ class RNN:
         exceed 1 for the non exploding RNN issues
         :param sizeY: the initiation matrix size y
         :param sizeX:the initiation matrix size x
-        :return: the svd matrix remove max value
+        :return: the svd matrix remove max values
         """
         if self.W_initiation == 'random':
             return rng.normal([sizeX, sizeY])
